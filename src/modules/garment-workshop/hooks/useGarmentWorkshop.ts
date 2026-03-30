@@ -1,4 +1,4 @@
-﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 import type { PaymentMethod } from '@/types/payment-method';
@@ -58,7 +58,7 @@ export function useCreateGarmentOperation() {
       unitPriceCop: number;
       sequence?: number;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.createOperation(workspaceId, payload);
     },
     onSuccess: () => {
@@ -79,7 +79,7 @@ export function useUpdateGarmentOperation() {
       unitPriceCop?: number;
       sequence?: number;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       const { operationId, ...body } = payload;
       return garmentWorkshopApi.updateOperation(workspaceId, operationId, body);
     },
@@ -97,7 +97,7 @@ export function useDeleteGarmentOperation() {
 
   return useMutation({
     mutationFn: async (operationId: string) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.deleteOperation(workspaceId, operationId);
     },
     onSuccess: () => {
@@ -127,7 +127,7 @@ export function useCreateGarmentMachine() {
 
   return useMutation({
     mutationFn: async (payload: { name: string; code?: string }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.createMachine(workspaceId, payload);
     },
     onSuccess: () => {
@@ -162,7 +162,7 @@ export function useCreateGarment() {
       operationIds: string[];
       imageUrls?: string[];
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.createGarment(workspaceId, payload);
     },
     onSuccess: () => {
@@ -184,7 +184,7 @@ export function useUpdateGarment() {
       operationIds?: string[];
       imageUrls?: string[];
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       const { garmentId, ...body } = payload;
       return garmentWorkshopApi.updateGarment(workspaceId, garmentId, body);
     },
@@ -201,7 +201,7 @@ export function useDeleteGarment() {
 
   return useMutation({
     mutationFn: async (garmentId: string) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.deleteGarment(workspaceId, garmentId);
     },
     onSuccess: () => {
@@ -253,7 +253,7 @@ export function useCreateGarmentLot() {
       technicalSheetEvidenceUrl?: string;
       observations?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.createLot(workspaceId, payload);
     },
     onSuccess: () => {
@@ -285,7 +285,7 @@ export function useUpdateGarmentLot(lotId: string) {
       technicalSheetUrl?: string;
       observations?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.updateLot(workspaceId, lotId, payload);
     },
     onSuccess: () => {
@@ -309,7 +309,7 @@ export function useAddGarmentLaborPayment(lotId: string) {
       note?: string;
       evidenceUrl?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.addLaborPayment(workspaceId, lotId, payload);
     },
     onSuccess: () => {
@@ -333,7 +333,7 @@ export function useAddGarmentLotIncome(lotId: string) {
       note?: string;
       evidenceUrl?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.addLotIncome(workspaceId, lotId, payload);
     },
     onSuccess: () => {
@@ -363,7 +363,7 @@ export function useAddGarmentLotCost(lotId: string) {
       note?: string;
       evidenceUrl?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.addLotCost(workspaceId, lotId, payload);
     },
     onSuccess: () => {
@@ -404,7 +404,7 @@ export function useCreateGarmentOperationLog(lotId: string) {
       note?: string;
       evidenceUrl?: string;
     }) => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.createLog(workspaceId, lotId, payload);
     },
     onSuccess: () => {
@@ -422,7 +422,7 @@ export function useDeliverGarmentLot(lotId: string) {
 
   return useMutation({
     mutationFn: async () => {
-      if (!workspaceId) throw new Error('Business not selected');
+      if (!workspaceId) throw new Error('No workspace selected');
       return garmentWorkshopApi.deliverLot(workspaceId, lotId);
     },
     onSuccess: () => {

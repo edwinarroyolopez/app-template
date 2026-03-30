@@ -1,12 +1,11 @@
-﻿// src/modules/memberships/hooks/useInviteMember.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { inviteBusinessMember } from '../services/memberships.api';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { inviteWorkspaceMember } from '../services/memberships.api';
+import { useAuthStore } from '@/stores/auth.store';
 import { Role } from '@/types/user';
 
 export function useInviteMember() {
     const qc = useQueryClient();
-    const workspaceId = useOperationalWorkspaceContextStore((s) => s.activeWorkspaceContext?.workspace.id);
+    const workspaceId = useAuthStore((s) => s.activeWorkspaceId);
 
     return useMutation({
         mutationFn: (data: {
@@ -14,7 +13,7 @@ export function useInviteMember() {
             name: string;
             role: Role;
             puestoCount: number;
-        }) => inviteBusinessMember(workspaceId!, data),
+        }) => inviteWorkspaceMember(workspaceId!, data),
 
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['memberships', workspaceId] });

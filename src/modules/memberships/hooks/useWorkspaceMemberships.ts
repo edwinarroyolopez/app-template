@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { useAuthStore } from '@/stores/auth.store';
 
 export function useWorkspaceMemberships(filter: 'ACTIVE' | 'INACTIVE' | 'ALL') {
-    const workspaceId = useOperationalWorkspaceContextStore((s) => s.activeWorkspaceContext?.workspace.id);
+    const workspaceId = useAuthStore((s) => s.activeWorkspaceId);
 
     return useQuery({
         queryKey: ['memberships', workspaceId, filter],

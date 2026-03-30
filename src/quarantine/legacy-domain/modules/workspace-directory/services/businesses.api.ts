@@ -27,8 +27,3 @@ export async function getBusinessExecutiveSummary(workspaceId: string) {
     const res = await api.get(`/workspaces/${workspaceId}/executive-summary`);
     return res.data;
 }
-
-export async function getAccountAnalyticsOverview() {
-    const res = await api.get('/workspaces/analytics/overview');
-    return res.data;
-}

@@ -6,7 +6,7 @@ let mmkvInstance: MMKV | null = null;
 try {
     // Intentamos instanciar la clase nativa
     mmkvInstance = new MMKV({
-        id: 'business-storage',
+        id: 'starter-app-storage',
     });
     console.log("MMKV: Instancia nativa cargada con éxito.");
 } catch {

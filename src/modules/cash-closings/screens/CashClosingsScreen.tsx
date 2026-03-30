@@ -16,7 +16,7 @@ import Toast from 'react-native-toast-message';
 import { MainLayout } from '@/components/MainLayout/MainLayout';
 import { Loader } from '@/components/ui/Loader';
 import { RefreshHeader } from '@/components/RefreshHeader/RefreshHeader';
-import { useRequireActiveWorkspaceContext } from '@/quarantine/legacy-domain/modules/workspace-directory/hooks/useRequireActiveWorkspaceContext';
+import { useRequireActiveWorkspace } from '@/hooks/useRequireActiveWorkspace';
 import {
   useCashClosings,
   useCashClosingsDailySummary,
@@ -41,8 +41,7 @@ function parseAmountInput(rawValue: string) {
 
 export default function CashClosingsScreen() {
   const navigation = useNavigation<any>();
-  const activeWorkspaceContext = useRequireActiveWorkspaceContext();
-  const workspaceId = activeWorkspaceContext?.workspace?.id;
+  const workspaceId = useRequireActiveWorkspace();
   const filters = useCashClosingsFilters();
 
   const closingsQuery = useCashClosings(workspaceId, filters.period);

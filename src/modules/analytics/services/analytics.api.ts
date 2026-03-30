@@ -63,4 +63,7 @@ export async function getWorkspaceCostBreakdown(workspaceId: string, params: {
     };
 }
 
-
+export async function getAccountAnalyticsOverview() {
+    const { data } = await api.get('/workspaces/analytics/overview');
+    return data;
+}

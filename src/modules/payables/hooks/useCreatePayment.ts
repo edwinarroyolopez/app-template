@@ -1,16 +1,16 @@
-﻿// src/modules/payables/hooks/useCreatePayment.ts
+// src/modules/payables/hooks/useCreatePayment.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { paymentsApi } from '../services/payments.api';
 import type { CreatePaymentInput } from '../types/payments.types';
 
 export function useCreatePayment(payableId: string) {
-    const workspaceId = useOperationalWorkspaceContextStore((s) => s.activeWorkspaceContext?.workspace.id);
+    const workspaceId = useAuthStore((s) => s.activeWorkspaceId);
     const qc = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreatePaymentInput) => {
-            if (!workspaceId) throw new Error('No active business');
+            if (!workspaceId) throw new Error('No active workspace');
             return paymentsApi.createPayment(workspaceId, payableId, input);
         },
         onSuccess: () => {

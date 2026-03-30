@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   workspaceWrap: {
     gap: 8,
   },
-  businessChip: {
+  workspaceChip: {
     minHeight: 42,
     borderRadius: 10,
     borderWidth: 1,

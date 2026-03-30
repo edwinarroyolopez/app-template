@@ -146,7 +146,7 @@ export default function AnalyticsHubScreen() {
               </View>
               <View style={styles.headerTextWrap}>
                 <Text style={styles.headerTitle}>Analytics profundos</Text>
-                <Text style={styles.headerSubtitle}>Compara negocios y detecta fricciones operativas de la cuenta.</Text>
+                <Text style={styles.headerSubtitle}>Compara workspaces y detecta fricciones operativas de la cuenta.</Text>
               </View>
             </View>
 
@@ -207,7 +207,7 @@ export default function AnalyticsHubScreen() {
               >
                 <View style={styles.delayedLeft}>
                   <Text style={styles.delayedProduct} numberOfLines={1}>{item.productName || 'Producto sin nombre'}</Text>
-                  <Text style={styles.delayedMeta} numberOfLines={1}>{item.businessName} • {item.clientName || 'Sin cliente'}</Text>
+                  <Text style={styles.delayedMeta} numberOfLines={1}>{item.workspaceName} • {item.clientName || 'Sin cliente'}</Text>
                 </View>
                 <Text style={styles.delayedDays}>{item.delayedDays} dias</Text>
               </Pressable>
@@ -231,7 +231,7 @@ export default function AnalyticsHubScreen() {
                 {!singleWorkspace && (
                   <Text style={[styles.rankingPosition, index === 0 && styles.rankingPositionTop]}>#{index + 1}</Text>
                 )}
-                <Text style={styles.rankingName} numberOfLines={1}>{item.businessName}</Text>
+                <Text style={styles.rankingName} numberOfLines={1}>{item.workspaceName}</Text>
                 <Text style={styles.rankingMeta} numberOfLines={1}>{item.todayOrders} pedidos hoy</Text>
               </View>
               <View style={styles.rankingRight}>

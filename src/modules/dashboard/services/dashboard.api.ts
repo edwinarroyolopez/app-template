@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { WIRE_ALT_WORKSPACE_OBJECT_KEY } from '@/utils/wireWorkspaceBody';
 import type { WorkspaceDashboardSummary } from '../types/dashboard.types';
 
 export async function getWorkspaceDashboardSummary(
@@ -8,10 +9,12 @@ export async function getWorkspaceDashboardSummary(
   const res = await api.get(`/workspaces/${workspaceId}/dashboard-summary`, {
     params: params || {},
   });
-  const raw = res.data as WorkspaceDashboardSummary & { business?: WorkspaceDashboardSummary['workspace'] };
-  const workspace = raw.workspace ?? raw.business;
+  const raw = res.data as WorkspaceDashboardSummary & Record<string, unknown>;
+  const workspace =
+    raw.workspace ??
+    (raw[WIRE_ALT_WORKSPACE_OBJECT_KEY] as WorkspaceDashboardSummary['workspace'] | undefined);
   if (!workspace) {
-    throw new Error('dashboard-summary: expected `workspace` (or legacy `business`) in response');
+    throw new Error('dashboard-summary: expected workspace summary in response');
   }
   return { ...raw, workspace };
 }

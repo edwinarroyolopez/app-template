@@ -1,6 +1,6 @@
-// src/modules/analytics/hooks/useBusinessesRanking.ts
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
+import { normalizeWorkspacesRankingPayload } from '../utils/wireCompatLabels';
 
 export function useWorkspacesRanking(params: {
     from: string;
@@ -13,7 +13,7 @@ export function useWorkspacesRanking(params: {
                 '/analytics/workspaces/ranking',
                 { params }
             );
-            return data;
+            return normalizeWorkspacesRankingPayload(data);
         },
     });
 }

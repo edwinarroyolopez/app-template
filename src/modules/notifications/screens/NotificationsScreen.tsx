@@ -12,6 +12,7 @@ import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/
 import { useNotifications } from '../hooks/useNotifications';
 import { useMarkNotificationRead } from '../hooks/useMarkNotificationRead';
 import type { AppNotification } from '../types/notification.type';
+import { WIRE_ALT_WORKSPACE_ID_KEY } from '@/utils/wireWorkspaceBody';
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString('es-CO', {
@@ -35,10 +36,11 @@ export default function NotificationsScreen() {
       await markRead.mutateAsync(item._id);
     }
 
+    const meta = item.metadata as Record<string, unknown> | undefined;
     const targetWorkspaceId =
       item.workspaceId ||
-      (item.metadata as any)?.workspaceId ||
-      (item.metadata as any)?.businessId;
+      (meta?.workspaceId as string | undefined) ||
+      (meta?.[WIRE_ALT_WORKSPACE_ID_KEY] as string | undefined);
     if (targetWorkspaceId && targetWorkspaceId !== activeWorkspaceId) {
       const target = workspaceContexts.find((ctx) => ctx.workspace?.id === targetWorkspaceId);
       if (target) {

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import {
@@ -14,9 +14,9 @@ export function useInventoryAuditDraft(totalProducts: number) {
   const [draft, setDraft] = useState<LocalInventoryAuditDraft | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
 
-  function buildFreshDraft(currentBusinessId: string): LocalInventoryAuditDraft {
+  function buildFreshDraft(currentWorkspaceId: string): LocalInventoryAuditDraft {
     return {
-      workspaceId: currentBusinessId,
+      workspaceId: currentWorkspaceId,
       status: 'IN_PROGRESS',
       countsByProductId: {},
       pendingSyncProductIds: [],

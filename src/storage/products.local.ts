@@ -1,4 +1,4 @@
-﻿import { storage } from './mmkv';
+import { storage } from './mmkv';
 
 const KEY = 'products-local';
 
@@ -13,7 +13,7 @@ function writeMap(map: LocalProductsMap) {
   storage.set(KEY, JSON.stringify(map));
 }
 
-export function getLocalProductsByBusiness(workspaceId: string): any[] {
+export function getLocalProductsByWorkspace(workspaceId: string): any[] {
   const map = readMap();
   return map[workspaceId] || [];
 }

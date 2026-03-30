@@ -1,7 +1,7 @@
-﻿import { api } from '@/services/api';
+import { api } from '@/services/api';
 import { Role } from '@/types/user';
 
-export async function inviteBusinessMember(
+export async function inviteWorkspaceMember(
     workspaceId: string,
     data: {
         phone: string;

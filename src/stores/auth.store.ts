@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccountCapabilities } from '@/types/capabilities';
+import { migrateAuthStorageV3 } from '@/storage/legacy/authStorageMigrateV3';
 
 export type UserRole = 'OWNER' | 'OWNER_VIEWER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
@@ -164,61 +165,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       version: 3,
       storage: createJSONStorage(() => AsyncStorage),
-      migrate: (persistedState: unknown) => {
-        if (!persistedState || typeof persistedState !== 'object') {
-          return persistedState;
-        }
-        const p = persistedState as Record<string, unknown>;
-        const state = (p.state as Record<string, unknown>) || p;
-
-        if (Array.isArray(state.workspaceContexts) && !Array.isArray(state.workspaces)) {
-          state.workspaces = state.workspaceContexts;
-          delete state.workspaceContexts;
-        }
-        if (state.activeWorkspaceId === undefined) {
-          const ws = state.workspaces as WorkspaceSummary[] | undefined;
-          state.activeWorkspaceId = ws?.[0]?.id ?? null;
-        }
-
-        const usage = state.usage as Record<string, unknown> | null | undefined;
-        if (usage && !usage.workspaces) {
-          const legacyWs = (usage.businesses ?? usage.mines) as { used?: number; max?: number } | undefined;
-          const legacyMembers = (usage.operations ?? usage.lavadas) as
-            | { used?: number; max?: number }
-            | undefined;
-          // Old persisted keys only (never used in starter UI paths after migrate).
-          const legacyMembersPb = usage.membersPerBusiness as { used?: number; max?: number } | undefined;
-          state.usage = {
-            workspaces: legacyWs ?? { used: 0, max: 0 },
-            members: {
-              used: legacyMembers?.used ?? legacyMembersPb?.used ?? 0,
-              max: legacyMembers?.max ?? legacyMembersPb?.max ?? 0,
-            },
-          };
-        }
-
-        const capabilities = state.capabilities as Record<string, unknown> | null | undefined;
-        if (capabilities) {
-          const canCreate =
-            capabilities.canCreateMultipleWorkspaces ??
-            capabilities.canCreateMultipleBusinesses ??
-            capabilities.canCreateMultipleBusinesss;
-          const canInvite =
-            capabilities.canInviteWorkspaceMembers ??
-            capabilities.canInviteBusinessMembers ??
-            capabilities.canInviteBusinessrs;
-          state.capabilities = {
-            ...capabilities,
-            canCreateMultipleWorkspaces: canCreate,
-            canInviteWorkspaceMembers: canInvite,
-            canAddOperations: capabilities.canAddOperations ?? capabilities.canAddLavadas,
-          };
-          delete (state.capabilities as Record<string, unknown>).canCreateMultipleBusinesses;
-          delete (state.capabilities as Record<string, unknown>).canInviteBusinessMembers;
-        }
-
-        return persistedState;
-      },
+      migrate: migrateAuthStorageV3,
       partialize: (state) => ({
         token: state.token,
         user: state.user,

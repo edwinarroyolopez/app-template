@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { WIRE_ALT_WORKSPACE_OBJECT_KEY } from '@/utils/wireWorkspaceBody';
 
 export type CashClosingPeriod =
   | 'TODAY'
@@ -160,13 +161,16 @@ export async function getCashClosingDailySummary(workspaceId: string, date?: str
     params: date ? { date } : {},
   });
 
+  const altWs = (data as Record<string, unknown> | undefined)?.[WIRE_ALT_WORKSPACE_OBJECT_KEY] as
+    | { id?: string; name?: string; type?: string }
+    | undefined;
   return {
     dayKey: String(data?.dayKey || ''),
     date: String(data?.date || new Date().toISOString()),
     workspace: {
-      id: String(data?.workspace?.id || data?.business?.id || ''),
-      name: String(data?.workspace?.name || data?.business?.name || ''),
-      type: String(data?.workspace?.type || data?.business?.type || ''),
+      id: String(data?.workspace?.id || altWs?.id || ''),
+      name: String(data?.workspace?.name || altWs?.name || ''),
+      type: String(data?.workspace?.type || altWs?.type || ''),
     },
     expectedIncomeCop: Number(data?.expectedIncomeCop || 0),
     expectedExpenseCop: Number(data?.expectedExpenseCop || 0),

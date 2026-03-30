@@ -1,7 +1,7 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 import { productsApi } from '../services/products.api';
-import { getLocalProductsByBusiness, saveRemoteProductsToLocal } from '@/storage/products.local';
+import { getLocalProductsByWorkspace, saveRemoteProductsToLocal } from '@/storage/products.local';
 
 type ProductStockFilter = 'ALL' | 'HIGH' | 'LOW' | 'FAVORITE';
 
@@ -32,7 +32,7 @@ export function useProducts(search?: string, options?: { stockFilter?: ProductSt
         saveRemoteProductsToLocal(workspaceId, remote);
         return remote;
       } catch {
-        const local = getLocalProductsByBusiness(workspaceId);
+        const local = getLocalProductsByWorkspace(workspaceId);
         const localFiltered = applyLocalFilter(local, stockFilter);
         if (!search) return localFiltered;
 

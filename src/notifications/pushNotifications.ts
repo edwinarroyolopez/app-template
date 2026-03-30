@@ -5,7 +5,7 @@ import { storage } from '@/storage/mmkv';
 import { navigationRef } from '@/navigation/navigationRef';
 import { useAuthStore } from '@/stores/auth.store';
 import { registerPushToken } from '@/modules/auth/services/auth.api';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { WIRE_ALT_WORKSPACE_ID_KEY } from '@/utils/wireWorkspaceBody';
 
 const FCM_TOKEN_KEY = 'fcm:token';
 const FCM_TOKEN_USER_KEY = 'fcm:token:user';
@@ -31,12 +31,13 @@ function extractSalePushData(message?: FirebaseMessagingTypes.RemoteMessage | nu
 
   const parse = (value: unknown) => (typeof value === 'string' ? value : undefined);
 
+  const d = message.data as Record<string, unknown>;
   return {
-    type: parse(message.data.type),
-    saleId: parse(message.data.saleId),
-    workspaceId: parse(message.data.workspaceId ?? message.data.businessId),
-    screen: parse(message.data.screen),
-    mode: parse(message.data.mode) as 'FACTORY' | 'DELIVERY' | undefined,
+    type: parse(d.type),
+    saleId: parse(d.saleId),
+    workspaceId: parse(d.workspaceId ?? d[WIRE_ALT_WORKSPACE_ID_KEY]),
+    screen: parse(d.screen),
+    mode: parse(d.mode) as 'FACTORY' | 'DELIVERY' | undefined,
   };
 }
 
@@ -48,16 +49,16 @@ function clearQueuedSaleNavigation() {
   storage.delete(PENDING_PUSH_CONTEXT_KEY);
 }
 
-/** Canonical key is `workspaceId`; older backends may still send `businessId`. */
+/** Resolves active workspace for deep links; push payloads use `workspaceId` (see wire compat util). */
 function ensureActiveWorkspaceForPush(workspaceId?: string) {
   if (!workspaceId) return true;
 
-  const state = useOperationalWorkspaceContextStore.getState();
-  if (state.activeWorkspaceContext?.workspace.id === workspaceId) return true;
+  const state = useAuthStore.getState();
+  if (state.activeWorkspaceId === workspaceId) return true;
 
-  const found = state.workspaceContexts.find((item) => item.workspace?.id === workspaceId);
+  const found = state.workspaces.find((item) => item.id === workspaceId);
   if (found) {
-    state.setActiveWorkspaceContext(found);
+    state.setActiveWorkspaceId(found.id);
     return true;
   }
 
@@ -75,34 +76,17 @@ function navigateFromPushContext(context: PendingPushContext) {
     return;
   }
 
-  if (context.screen === 'FactoryOrders') {
-    navigationRef.navigate('FactoryOrders');
+  if (context.screen === 'ProtectedForms') {
+    navigationRef.navigate('ProtectedForms');
     return;
   }
 
-  if (context.screen === 'FactoryOrderDetail' && context.saleId) {
-    navigationRef.navigate('FactoryOrderDetail', { saleId: context.saleId, mode: context.mode });
+  if (context.screen === 'ProtectedStates') {
+    navigationRef.navigate('ProtectedStates');
     return;
   }
 
-  if (context.screen === 'ReadyForDeliveryOrders') {
-    navigationRef.navigate('ReadyForDeliveryOrders');
-    return;
-  }
-
-  if (context.screen === 'Sales') {
-    navigationRef.navigate('Sales');
-    return;
-  }
-
-  if (context.screen === 'SaleDetail' && context.saleId) {
-    navigationRef.navigate('SaleDetail', { saleId: context.saleId });
-    return;
-  }
-
-  if (context.saleId) {
-    navigationRef.navigate('SaleDetail', { saleId: context.saleId });
-  }
+  navigationRef.navigate('ProtectedOverview');
 }
 
 export function flushPendingPushNavigation() {

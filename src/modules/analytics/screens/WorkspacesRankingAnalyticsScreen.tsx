@@ -1,4 +1,3 @@
-// src/modules/analytics/screens/BusinessesRankingAnalyticsScreen.tsx
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import {
     ArrowLeft,
@@ -62,7 +61,7 @@ export default function WorkspacesRankingAnalyticsScreen() {
 
                         <View>
                             <Text style={styles.headerTitle}>
-                                Ranking de negocios
+                                Ranking de workspaces
                             </Text>
                             <Text style={styles.headerSubtitle}>
                                 Comparación de rendimiento ({getTimeRangeLabel(range)})
@@ -80,12 +79,12 @@ export default function WorkspacesRankingAnalyticsScreen() {
                         </Text>
                     </View>
 
-                    <Text style={styles.bestBusinessName}>
-                        {data.bestBusiness.businessName}
+                    <Text style={styles.bestWorkspaceName}>
+                        {data.bestWorkspace.workspaceName}
                     </Text>
 
-                    <Text style={styles.bestBusinessValue}>
-                        $ {data.bestBusiness.net.toLocaleString()}
+                    <Text style={styles.bestWorkspaceValue}>
+                        $ {data.bestWorkspace.net.toLocaleString()}
                     </Text>
                 </Card>
 
@@ -107,12 +106,12 @@ export default function WorkspacesRankingAnalyticsScreen() {
                                 <View
                                     style={styles.rankItemHeader}
                                 >
-                                    <View style={styles.rankBusinessRow}>
+                                    <View style={styles.rankWorkspaceRow}>
                                         <Text style={styles.rankIndex}>
                                             #{i + 1}
                                         </Text>
-                                        <Text style={styles.rankBusinessName}>
-                                            {m.businessName}
+                                        <Text style={styles.rankWorkspaceName}>
+                                            {m.workspaceName}
                                         </Text>
                                     </View>
 
@@ -189,13 +188,13 @@ const styles = StyleSheet.create({
         fontWeight: theme.weight.bold,
         color: theme.colors.accent,
     },
-    bestBusinessName: {
+    bestWorkspaceName: {
         fontSize: theme.font.xl,
         fontWeight: theme.weight.bold,
         marginTop: theme.spacing.xs,
         color: theme.colors.textPrimary,
     },
-    bestBusinessValue: {
+    bestWorkspaceValue: {
         fontSize: theme.font.md,
         fontWeight: theme.weight.bold,
         color: theme.colors.success,
@@ -215,7 +214,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: theme.spacing.xs,
     },
-    rankBusinessRow: {
+    rankWorkspaceRow: {
         flexDirection: 'row',
         gap: theme.spacing.xs,
     },
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
         fontSize: theme.font.xs,
         color: theme.colors.textMuted,
     },
-    rankBusinessName: {
+    rankWorkspaceName: {
         fontWeight: theme.weight.bold,
         color: theme.colors.textPrimary,
         fontSize: theme.font.sm,

@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 import type { AuthUser } from '@/stores/auth.store';
 import type { AccountSummary, AccountUsage, WorkspaceSummary } from '@/stores/auth.store';
 import type { AccountCapabilities } from '@/types/capabilities';
-import type { OperationalWorkspaceContext } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 
 export async function requestOtp(phone: string) {
     const { data } = await api.post('/auth/request-otp', { phone });
@@ -59,8 +58,8 @@ export type MeResponse = {
         hasTierLimits: boolean;
     };
     capabilities?: MeResponse['accountCapabilities'];
-    /** Rich contexts when the API provides them (quarantine / future). */
-    operationalWorkspaceContexts?: OperationalWorkspaceContext[];
+    /** Optional backend payload kept as edge-only data (not starter canon). */
+    operationalWorkspaceContexts?: unknown[];
 };
 
 export async function getMe() {

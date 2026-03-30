@@ -1,4 +1,3 @@
-// src/modules/analytics/screens/BusinessWeeklyAnalyticsScreen.tsx
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BarChart3, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';

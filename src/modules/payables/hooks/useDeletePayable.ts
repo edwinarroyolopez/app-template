@@ -1,15 +1,15 @@
-﻿// src/modules/payables/hooks/useDeletePayable.ts
+// src/modules/payables/hooks/useDeletePayable.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { payablesApi } from '../services/payables.api';
 
 export function useDeletePayable() {
-    const workspaceId = useOperationalWorkspaceContextStore((s) => s.activeWorkspaceContext?.workspace.id);
+    const workspaceId = useAuthStore((s) => s.activeWorkspaceId);
     const qc = useQueryClient();
 
     return useMutation({
         mutationFn: async (payableId: string) => {
-            if (!workspaceId) throw new Error('No active business');
+            if (!workspaceId) throw new Error('No active workspace');
             return payablesApi.deletePayable(workspaceId, payableId);
         },
         onSuccess: () => {

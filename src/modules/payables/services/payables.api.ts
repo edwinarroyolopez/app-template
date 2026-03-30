@@ -1,4 +1,4 @@
-﻿// src/modules/payables/services/payables.api.ts
+// src/modules/payables/services/payables.api.ts
 import { api } from '@/services/api';
 import type {
     Payable,
@@ -10,7 +10,7 @@ import type {
 
 export const payablesApi = {
     /**
-     * GET /business/:workspaceId/payables
+     * GET /workspaces/:workspaceId/payables
      */
     async listPayables(workspaceId: string, query?: ListPayablesQuery): Promise<Payable[]> {
         const params: any = {};
@@ -30,7 +30,7 @@ export const payablesApi = {
     },
 
     /**
-     * GET /business/:workspaceId/payables/:payableId
+     * GET /workspaces/:workspaceId/payables/:payableId
      */
     async getPayable(workspaceId: string, payableId: string): Promise<Payable> {
         const { data } = await api.get<Payable>(`/workspaces/${workspaceId}/payables/${payableId}`);
@@ -38,7 +38,7 @@ export const payablesApi = {
     },
 
     /**
-     * POST /business/:workspaceId/payables
+     * POST /workspaces/:workspaceId/payables
      */
     async createPayable(workspaceId: string, input: CreatePayableInput): Promise<Payable> {
         const { data } = await api.post<Payable>(`/workspaces/${workspaceId}/payables`, input);
@@ -46,7 +46,7 @@ export const payablesApi = {
     },
 
     /**
-     * PATCH /business/:workspaceId/payables/:payableId
+     * PATCH /workspaces/:workspaceId/payables/:payableId
      */
     async updatePayable(
         workspaceId: string,
@@ -61,7 +61,7 @@ export const payablesApi = {
     },
 
     /**
-     * DELETE /business/:workspaceId/payables/:payableId (soft delete)
+     * DELETE /workspaces/:workspaceId/payables/:payableId (soft delete)
      */
     async deletePayable(workspaceId: string, payableId: string): Promise<Payable> {
         const { data } = await api.delete<Payable>(`/workspaces/${workspaceId}/payables/${payableId}`);
@@ -69,7 +69,7 @@ export const payablesApi = {
     },
 
     /**
-     * GET /business/:workspaceId/payables/summary
+     * GET /workspaces/:workspaceId/payables/summary
      */
     async getPayablesSummary(workspaceId: string): Promise<PayablesSummary> {
         const { data } = await api.get<PayablesSummary>(`/workspaces/${workspaceId}/payables/summary`);

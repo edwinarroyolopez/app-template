@@ -6,7 +6,6 @@ import { OfflineGate } from '@/components/OfflineGate/OfflineGate';
 import { View, ActivityIndicator } from 'react-native';
 import { theme } from '@/theme';
 import { useMe } from '@/modules/auth/hooks/useMe';
-import { useSyncLegacyOperationalFromMe } from '@/quarantine/legacy-domain/bootstrap/useSyncLegacyOperationalFromMe';
 import { useEffect, useState } from 'react';
 import { useAppVersionCheck } from '@/boot/useAppVersionCheck';
 import { navigationRef } from './navigationRef';
@@ -40,8 +39,7 @@ export default function RootNavigator() {
         };
     }, []);
 
-    const meQuery = useMe();
-    useSyncLegacyOperationalFromMe(meQuery);
+    useMe();
     useAppVersionCheck(isHydrated);
 
     useEffect(() => {

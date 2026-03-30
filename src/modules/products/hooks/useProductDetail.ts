@@ -1,7 +1,7 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
-import { getLocalProductsByBusiness } from '@/storage/products.local';
+import { getLocalProductsByWorkspace } from '@/storage/products.local';
 import { productsApi } from '../services/products.api';
 
 export function useProductDetail(productId?: string) {
@@ -16,7 +16,7 @@ export function useProductDetail(productId?: string) {
       try {
         return await productsApi.getProduct(workspaceId, productId);
       } catch {
-        const local = getLocalProductsByBusiness(workspaceId);
+        const local = getLocalProductsByWorkspace(workspaceId);
         return local.find((item: any) => item._id === productId || item.id === productId) || null;
       }
     },

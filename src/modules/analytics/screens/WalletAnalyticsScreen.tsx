@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { MainLayout } from '@/components/MainLayout/MainLayout';
 import { theme } from '@/theme';
-import { useRequireActiveWorkspaceContext } from '@/quarantine/legacy-domain/modules/workspace-directory/hooks/useRequireActiveWorkspaceContext';
+import { useRequireActiveWorkspace } from '@/hooks/useRequireActiveWorkspace';
 
 export default function WalletAnalyticsScreen() {
-    const activeWorkspaceContext = useRequireActiveWorkspaceContext();
+    const activeWorkspaceId = useRequireActiveWorkspace();
 
-    if (!activeWorkspaceContext) return null;
+    if (!activeWorkspaceId) return null;
 
     return (
         <MainLayout>

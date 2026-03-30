@@ -14,7 +14,8 @@ import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { RefreshHeader } from '@/components/RefreshHeader/RefreshHeader';
 import { theme } from '@/theme';
-import { useRequireActiveWorkspaceContext } from '@/quarantine/legacy-domain/modules/workspace-directory/hooks/useRequireActiveWorkspaceContext';
+import { useRequireActiveWorkspace } from '@/hooks/useRequireActiveWorkspace';
+import { useAuthStore } from '@/stores/auth.store';
 import { MembersLimitBanner } from '../components/MembersLimitBanner';
 import { useUpdateMembership } from '../hooks/useUpdateMembership';
 
@@ -32,12 +33,17 @@ export default function MembershipsScreen() {
 
     const [filter, setFilter] = useState<MembershipFilter>('ACTIVE');
 
-    const activeWorkspaceContext = useRequireActiveWorkspaceContext();
+    const activeWorkspaceId = useRequireActiveWorkspace();
+    const activeWorkspaceName = useAuthStore((s) => {
+        const id = s.activeWorkspaceId;
+        if (!id) return '';
+        return s.workspaces.find((w) => w.id === id)?.name ?? '';
+    });
     const updateMembership = useUpdateMembership();
     const { data, isLoading, isFetching, refetch } =
         useWorkspaceMemberships(filter);
 
-    if (!activeWorkspaceContext) return null;
+    if (!activeWorkspaceId) return null;
 
 
     if (isLoading) {
@@ -60,7 +66,7 @@ export default function MembershipsScreen() {
                     <View style={styles.headerRow}>
                         <RefreshHeader
                             title="Personal"
-                            subtitle={activeWorkspaceContext.workspace.name}
+                            subtitle={activeWorkspaceName}
                             icon={<Users size={20} color={theme.colors.accent} />}
                             isFetching={isFetching}
                             onRefresh={refetch}

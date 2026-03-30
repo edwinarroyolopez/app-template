@@ -1,9 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAccountAnalyticsOverview } from '@/quarantine/legacy-domain/modules/workspace-directory/services/businesses.api';
+import { getAccountAnalyticsOverview } from '../services/analytics.api';
+import { normalizeAccountAnalyticsOverviewPayload } from '../utils/wireCompatLabels';
 
 export function useAccountAnalyticsOverview() {
   return useQuery({
     queryKey: ['account-analytics-overview'],
-    queryFn: () => getAccountAnalyticsOverview(),
+    queryFn: async () => {
+      const raw = await getAccountAnalyticsOverview();
+      return normalizeAccountAnalyticsOverviewPayload(raw);
+    },
   });
 }

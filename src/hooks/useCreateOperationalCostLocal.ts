@@ -1,4 +1,4 @@
-﻿import uuid from 'react-native-uuid';
+import uuid from 'react-native-uuid';
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 import {
     addLocalOperationalCost,
@@ -23,7 +23,7 @@ export function useCreateOperationalCostLocal() {
         audio?: { uri: string };
         image?: { uri: string };
     }) {
-        if (!workspaceId) throw new Error('No active business');
+        if (!workspaceId) throw new Error('No active workspace');
 
         const id = uuid.v4();
 

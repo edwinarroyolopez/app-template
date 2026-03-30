@@ -1,4 +1,3 @@
-// src/modules/analytics/hooks/useBusinessWeeklyCostBreakdown.ts
 import { useQuery } from '@tanstack/react-query';
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
 import { api } from '@/services/api';

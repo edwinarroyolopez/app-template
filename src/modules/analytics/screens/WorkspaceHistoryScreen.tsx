@@ -1,4 +1,3 @@
-// src/modules/analytics/screens/BusinessHistoryScreen.tsx
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { TrendingUp, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';

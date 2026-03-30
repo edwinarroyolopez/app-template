@@ -1,16 +1,16 @@
-﻿// src/modules/payables/hooks/usePayablesSummary.ts
+// src/modules/payables/hooks/usePayablesSummary.ts
 import { useQuery } from '@tanstack/react-query';
-import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { payablesApi } from '../services/payables.api';
 
 export function usePayablesSummary() {
-    const workspaceId = useOperationalWorkspaceContextStore((s) => s.activeWorkspaceContext?.workspace.id);
+    const workspaceId = useAuthStore((s) => s.activeWorkspaceId);
 
     return useQuery({
         queryKey: ['payables-summary', workspaceId],
         enabled: !!workspaceId,
         queryFn: async () => {
-            if (!workspaceId) throw new Error('No active business');
+            if (!workspaceId) throw new Error('No active workspace');
             return payablesApi.getPayablesSummary(workspaceId);
         },
     });

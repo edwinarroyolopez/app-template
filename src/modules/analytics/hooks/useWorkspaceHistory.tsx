@@ -1,4 +1,3 @@
-// src/modules/analytics/hooks/useBusinessHistory.ts
 import { useQuery } from '@tanstack/react-query';
 import { getWorkspaceHistory } from '../services/analytics.api';
 import { useOperationalWorkspaceContextStore } from '@/quarantine/legacy-domain/stores/operationalWorkspaceContext.store';

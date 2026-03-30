@@ -1,10 +1,10 @@
-﻿// src/modules/payables/services/payments.api.ts
+// src/modules/payables/services/payments.api.ts
 import { api } from '@/services/api';
 import type { Payment, CreatePaymentInput } from '../types/payments.types';
 
 export const paymentsApi = {
     /**
-     * GET /business/:workspaceId/payables/:payableId/payments
+     * GET /workspaces/:workspaceId/payables/:payableId/payments
      */
     async listPayments(workspaceId: string, payableId: string): Promise<Payment[]> {
         const { data } = await api.get<Payment[]>(
@@ -14,7 +14,7 @@ export const paymentsApi = {
     },
 
     /**
-     * POST /business/:workspaceId/payables/:payableId/payments
+     * POST /workspaces/:workspaceId/payables/:payableId/payments
      */
     async createPayment(
         workspaceId: string,
@@ -29,7 +29,7 @@ export const paymentsApi = {
     },
 
     /**
-     * DELETE /business/:workspaceId/payables/:payableId/payments/:paymentId (soft delete)
+     * DELETE /workspaces/:workspaceId/payables/:payableId/payments/:paymentId (soft delete)
      */
     async deletePayment(
         workspaceId: string,

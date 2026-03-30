@@ -15,17 +15,17 @@ import Toast from 'react-native-toast-message';
 import { theme } from '@/theme';
 import { useAIAnalysis } from '../hooks/useAIAnalysis';
 import { buildRangesFromPreset } from '@/modules/analytics/utils/timeRanges';
-import { useRequireActiveWorkspaceContext } from '@/quarantine/legacy-domain/modules/workspace-directory/hooks/useRequireActiveWorkspaceContext';
+import { useRequireActiveWorkspace } from '@/hooks/useRequireActiveWorkspace';
 
 export default function AIAnalysisScreen() {
-    const activeWorkspaceContext = useRequireActiveWorkspaceContext();
+    const activeWorkspaceId = useRequireActiveWorkspace();
     const nav = useNavigation<any>();
     const ranges = buildRangesFromPreset('LAST_30');
 
     const { latest, history, generate } = useAIAnalysis();
     const [processing, setProcessing] = useState(false);
 
-    if (!activeWorkspaceContext) return null;
+    if (!activeWorkspaceId) return null;
 
     if (latest.isLoading) {
         return (

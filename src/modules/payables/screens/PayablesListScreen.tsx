@@ -20,14 +20,14 @@ import CreatePayableModal from '../components/CreatePayableModal';
 
 import type { AppStackParamList } from '@/navigation/AppNavigator';
 import type { PayableStatus } from '../types/payables.types';
-import { useRequireActiveWorkspaceContext } from '@/quarantine/legacy-domain/modules/workspace-directory/hooks/useRequireActiveWorkspaceContext';
+import { useRequireActiveWorkspace } from '@/hooks/useRequireActiveWorkspace';
 import { PAYABLE_STATUS_FILTERS } from '../utils/payablesList.constants';
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 
 export default function PayablesListScreen() {
     const navigation = useNavigation<Nav>();
-    const activeWorkspaceContext = useRequireActiveWorkspaceContext();
+    const activeWorkspaceId = useRequireActiveWorkspace();
 
     const [statusFilter, setStatusFilter] = useState<PayableStatus | undefined>(undefined);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,7 +35,7 @@ export default function PayablesListScreen() {
     const { data: payables, isLoading, isFetching, refetch } = usePayables({ status: statusFilter });
     const { data: summary, isLoading: summaryLoading } = usePayablesSummary();
 
-    if (!activeWorkspaceContext) return null;
+    if (!activeWorkspaceId) return null;
 
     if (isLoading) {
         return (
