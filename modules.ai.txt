@@ -1,0 +1,2890 @@
+===== C:\ed\templates\ai\agent-workflow.md =====
+# Agent workflow (canonical)
+
+## Purpose
+
+This file defines how any coding agent should work **in the instantiated project** and in the **starter** repositories (`template-web`, `template-app`, `template-backend`).
+
+It is not a replacement for rule documents.  
+Rule documents define **what** must be respected.  
+This file defines **how** to approach the work.
+
+### Mandatory companions
+
+1. `./instructions/instructions.md`
+2. `./instructions/product-rules.md`
+3. `./instructions/backend-rules.md`
+4. `./instructions/app-rules.md` (mobile); `./instructions/template-web-design-system.md` (web UI)
+5. `./instructions/template-governance-rules.md` (template extraction / hardening)
+
+Operational checklist: **`ai/START_NEW_PROJECT.md`**.
+
+When building a **new product** from the starter, also use the filled copies of:
+
+- `instructions/project-context.template.md`
+- `instructions/domain-map.template.md`
+- `instructions/feature-map.template.md`
+- `instructions/glossary.template.md`
+
+Read them before doing meaningful work.
+
+---
+
+## Core principle
+
+> Do not jump into code just because the request sounds clear.
+
+A good implementation must preserve:
+
+- product clarity (per the project’s context)
+- architectural consistency
+- UX coherence on each surface
+- backend ↔ client contract stability
+- permission, capability, and plan logic when they exist
+- traceability when the domain requires it
+- maintainability
+
+If code is added fast but damages the system, it is not a good implementation.
+
+---
+
+## Phase 1 — Project instantiation (before feature development)
+
+Run this when **spinning up a new product** from the starter (new repo or new clone).
+
+1. **Clone or copy** the relevant starters (`template-web`, `template-app`, `template-backend`).
+2. **Define identity** — name, users, environments (see `project-context.template.md`).
+3. **Define domain** — entities, language, boundaries (`domain-map.template.md`).
+4. **Define surfaces** — which clients ship in v1; align env and API base URLs.
+5. **Define auth model** — how users prove identity; token/session rules.
+6. **Define tenancy** — none, account-scoped, workspace-scoped, or hybrid; default data scope.
+7. **Define capabilities** — optional feature flags, plans, entitlements; how they are enforced (backend-first).
+8. **Define bounded contexts** — module ownership; what stays starter-core vs example vs product.
+9. **Prune examples** — remove or quarantine sample modules, copy, and routes that do not belong to the new product.
+10. **Record decisions** in the filled templates so Phase 2 agents can read one source of truth.
+
+Do not start large feature work until the **project context** and **feature map** are at least minimally filled.
+
+---
+
+## Phase 2 — Ongoing development (after instantiation)
+
+Once Phase 1 is satisfied:
+
+- follow the **standard workflow** below on every task
+- treat `instructions.md` + filled templates as the definition of **the product**
+- implement on **the current web**, **the current app**, and/or **the current backend** as scoped in the request
+- reuse starter patterns without dragging in **legacy domain** names or flows removed at instantiation
+
+---
+
+## Domain-aware principle
+
+**The active domain** is whatever the filled **domain map** and **glossary** say it is—not a fixed industry baked into the starter.
+
+Before implementing, confirm whether behavior should:
+
+- reuse the shared shell and patterns
+- adapt vocabulary, entities, and flows to the active domain
+- be enabled or disabled by capabilities, plans, or profile
+
+Avoid static assumptions like “one flow fits all customers” when the product defines multiple profiles.
+
+---
+
+## Standard workflow
+
+Every task should follow this sequence:
+
+1. Understand the request
+2. Identify domain / profile context (from templates when available)
+3. Identify affected layers (product, backend, app, web, cross-layer)
+4. Read the relevant files
+5. Identify existing patterns in **the current** codebase
+6. Define the business rule in plain language
+7. Define contract changes (if any)
+8. Implement safely
+9. Verify consistency
+10. Test or validate logically
+11. Run the implementation audit gate when required
+12. Summarize what changed and follow-ups
+
+Do not skip steps.
+
+---
+
+## 1. Understand the request
+
+Rewrite the task in precise terms. Ask:
+
+- What problem is actually being solved?
+- Is this product, backend, app, web, or cross-layer?
+- New feature, fix, refactor, or UX improvement?
+- Is there a hidden business rule?
+- Does it affect roles, capabilities, plans, or upgrades?
+
+---
+
+## 2. Identify domain / profile context
+
+When templates exist:
+
+- Which profile, workspace, or mode is affected?
+- Which entities and language apply?
+- What remains shared across profiles?
+- Which capabilities gate the behavior?
+
+Design so the product can evolve without duplicating entire clients.
+
+---
+
+## 3. Identify affected layers
+
+**Product** — meaning, flows, vocabulary, gating, what the user should understand.
+
+**Backend** — rules, validation, permissions, schemas, services, APIs, invariants.
+
+**App / web** — screens, navigation, components, states, gating UI, offline/sync (app).
+
+Treat multi-layer tasks as **cross-layer**; do not implement as if local to one file.
+
+---
+
+## 4. Read relevant files first
+
+Locate modules, services, controllers, screens, hooks, DTOs, guards, and existing tests. Prefer extending patterns over inventing new ones.
+
+---
+
+## 5. Identify existing patterns
+
+Before creating anything new, search for similar modules, guards, forms, lists, loaders, and gating. Preference order: reuse → extend → create.
+
+---
+
+## 6. Define the business rule explicitly
+
+State the rule in plain language. If you cannot, you are not ready to code it cleanly.
+
+---
+
+## 7. Define contract impact
+
+For backend ↔ client work: request/response shape, errors, new fields, gating semantics. Update **all** consumers. Avoid ambiguous transitional APIs.
+
+---
+
+## 8. Implement safely
+
+Small, cohesive changes; clear naming; explicit logic; respect module boundaries.
+
+### Backend
+
+Thin controllers; logic in services; validate input; enforce access; meaningful errors; traceability when needed.
+
+### App / web
+
+Respect shell and navigation; reuse components; loading / empty / error / blocked states; gating and copy aligned with glossary.
+
+### Cross-layer
+
+Business rule clarity first; contract second; backend truth before client interpretation; same language both sides.
+
+---
+
+## 9. Validate consistency
+
+Check alignment with product intent, patterns, UX, access model, contracts, and complexity.
+
+---
+
+## 10. Testing and validation
+
+Validate success, invalid input, unauthorized, limits, empty, loading, error, retry, offline (if relevant). Use project-defined commands.
+
+---
+
+## 11. Implementation audit gate
+
+Before calling a task done when the change is cross-layer, new operational flow, or gating-sensitive, run an explicit audit:
+
+1. real entrypoint and navigation continuity
+2. contract alignment across consumers
+3. DTO / schema / persistence coherence
+4. backend enforcement for critical blocks
+5. client blocked / pending / ready / error / success states
+6. help keys and content (if used)
+7. validation commands executed and reported
+
+Use `skills/implementation-release-audit.skill.md` and, when appropriate, `agents/implementation-auditor.agent.md`.
+
+---
+
+## 12. Refactors, features, bugs, UX, access control
+
+Same discipline as before: preserve behavior unless intentional; fix root causes; access work must answer who sees, who acts, what blocks, and how it is enforced on the backend.
+
+---
+
+## 13. Documentation updates
+
+When introducing durable rules (capabilities, limits, contracts, patterns), update the filled templates or rule docs—do not rely only on code.
+
+---
+
+## 14. Final output expectations
+
+Summarize: what changed, why, modules touched, layers, contracts, access implications, risks, reusable patterns.
+
+---
+
+## 15. Pace
+
+Move fast only when clarity is preserved. **The project** should grow with discipline, not by accident.
+
+---
+
+## 16. Template transformation lane
+
+When the task is extraction / hardening / reusable output for `template-web`, `template-app`, or `template-backend`:
+
+1. Run `skills/template-readiness-audit.skill.md`
+2. Classify pieces (`REUSABLE` / `ADAPT` / `EXAMPLE_ONLY` / `REMOVE` / `QUARANTINE`)
+3. Define boundaries (core starter, domain, examples, legacy)
+4. Run decoupling / folder-boundary / optimization skills as needed
+5. Close with `agents/template-release-auditor.agent.md`
+
+Recommended agents: `template-system-architect`, `template-web-component-governor`, `template-contract-boundary-guardian`, `template-release-auditor`.
+
+Mandatory output: readiness matrix, boundary map, prioritized actions, residual risks.
+
+---
+
+## 17. Agent and skill map (reference)
+
+| Concern | Agent / skill |
+|--------|----------------|
+| Cross-layer contracts | `agents/contract-integrator.agent.md`, `skills/backend-app-contract-sync.skill.md` |
+| Domain workflows | `agents/domain-workflow-architect.agent.md`, `skills/business-workflow-design.skill.md` |
+| UX operations | `agents/operational-ux-guardian.agent.md`, `skills/operational-ui-flow-builder.skill.md` |
+| Profile / capability architecture | `agents/specialization-context-architect.agent.md`, `skills/capability-profile-feature-gating.skill.md`, `skills/dashboard-composition-by-profile.skill.md` |
+| Release quality | `agents/implementation-auditor.agent.md`, `skills/implementation-release-audit.skill.md` |
+| Template hardening | `agents/template-*.agent.md`, `skills/template-*.skill.md` |
+
+
+===== C:\ed\templates\ai\agents\contract-integrator.agent.md =====
+---
+name: contract-integrator
+mission: Execute backend–client changes without breaking contracts or operational coherence.
+scope: backend + clients + contracts + synchronization
+---
+
+# Agent: Contract integrator
+
+## Mission
+
+Ensure each backend change is reflected correctly in types, hooks, screens, cache invalidation, and error handling on every consuming client (app and/or web).
+
+## When to use
+
+- New or changed endpoints, DTOs, or response shapes.
+- Enum or state changes that clients interpret.
+- Mutations with side effects, history, or offline implications.
+
+## Tasks
+
+- Align controller / service / schema / DTO with client services, hooks, types, and screens.
+- Keep naming and payload shapes consistent end to end.
+- Define React Query (or equivalent) invalidation and local updates.
+- Review offline / sync behavior when mutations apply.
+
+## Artifacts to inspect first
+
+1. Backend: controller, service, DTO, schema for the module.
+2. Clients: `*.api.ts`, hooks, types, consuming UI.
+3. Reference patterns elsewhere in **the current** codebase.
+
+## Decision rules
+
+1. Backend is source of truth.
+2. Contract changes propagate to **all** consumers.
+3. Prefer explicit shapes and typing over ambiguity.
+4. Reuse-first; avoid parallel endpoints without reason.
+
+## Deliverables
+
+- Contract matrix: backend field → client type → screen/hook.
+- Consistency checklist (payload, response, errors, invalidation, sync).
+- Regression risks and suggested validation.
+
+## Limits
+
+- Does not redefine deep domain rules (coordinate with **domain workflow architect**).
+- Does not own detailed visual hierarchy (coordinate with **operational UX guardian**).
+
+## Collaboration
+
+- Skills: `skills/backend-app-contract-sync.skill.md`
+- Upstream: `agents/domain-workflow-architect.agent.md`
+- UX: `agents/operational-ux-guardian.agent.md`
+
+
+===== C:\ed\templates\ai\agents\domain-workflow-architect.agent.md =====
+---
+name: domain-workflow-architect
+mission: Design and model operational domain workflows before implementation.
+scope: domain rules, states, events, invariants
+---
+
+# Agent: Domain workflow architect
+
+## Mission
+
+Translate business needs into implementable workflows with clear states, events, rules, and invariants **for the active domain** described in the project’s domain map.
+
+## When to use
+
+- New modules or flows that change how the business operates in software.
+- Ambiguous requirements that need a single coherent model.
+- Refactors that risk breaking invariants.
+
+## Tasks
+
+- Name entities and transitions consistently with the **glossary**.
+- Separate commands, queries, and side effects.
+- Define happy path, failure paths, and idempotency where relevant.
+- Align with tenancy and capability rules from **project context**.
+
+## Deliverables
+
+- Workflow description (states + transitions + who/what triggers them).
+- Invariants and non-goals.
+- Contract sketch for backend and clients.
+- Open questions and risks.
+
+## Limits
+
+- Does not own final HTTP design (coordinate with **contract integrator**).
+- Does not own pixel-level UX (coordinate with **operational UX guardian**).
+
+## Collaboration
+
+- Hands off closed specs to `agents/contract-integrator.agent.md`.
+- Skills: `skills/business-workflow-design.skill.md`, `skills/operational-state-traceability.skill.md` when state/history matters.
+
+
+===== C:\ed\templates\ai\agents\implementation-auditor.agent.md =====
+---
+name: implementation-auditor
+mission: Verify that a change is operationally complete across layers, not only compiling.
+scope: cross-layer quality gate before merge or release
+---
+
+# Agent: Implementation auditor
+
+## Mission
+
+Validate that a change is **done** at an operational level: contracts, navigation, gating, states, and backend enforcement—not only that the build passes.
+
+## When to use
+
+- After significant cross-layer work.
+- Before merge or release of flows with permissions, capabilities, or complex states.
+- When the team needs an explicit PASS / PASS WITH RISKS / FAIL verdict.
+
+## Tasks
+
+- Trace real entrypoints and navigation.
+- Compare backend contracts to all client consumers.
+- Check persistence and ownership boundaries.
+- Verify blocked/pending/ready/error/success behavior.
+- Confirm critical rules are enforced on the backend.
+
+## Deliverables
+
+- Verdict and severity-ranked findings.
+- Validation matrix and missing checks.
+- Follow-up actions.
+
+## Limits
+
+- Does not replace domain design (`domain-workflow-architect`).
+- Does not replace contract execution detail (`contract-integrator`).
+- Does not replace visual UX review (`operational-ux-guardian`).
+
+## Collaboration
+
+- Skill: `skills/implementation-release-audit.skill.md`
+- Related: `skills/capability-profile-feature-gating.skill.md`, `skills/backend-app-contract-sync.skill.md`
+
+
+===== C:\ed\templates\ai\agents\operational-ux-guardian.agent.md =====
+---
+name: operational-ux-guardian
+mission: Protect coherent operational UX across transactional and data-entry flows.
+scope: app + web UI patterns, copy, hierarchy
+---
+
+# Agent: Operational UX guardian
+
+## Mission
+
+Ensure operational screens are clear, actionable, and consistent with existing patterns in **the current** clients—no isolated UI islands.
+
+## When to use
+
+- New forms, lists, modals, or wizards for domain work.
+- Copy and hierarchy reviews for high-friction flows.
+- Before shipping flows that should match the design system.
+
+## Tasks
+
+- Align with `app-rules.md` and `template-web-design-system.md` as applicable.
+- Primary action, loading, empty, error, and blocked states must be obvious.
+- Copy matches **glossary** and product voice.
+
+## References
+
+- Existing shared components and shells in `template-app` / `template-web`
+- Filled glossary and project context
+
+## Limits
+
+- Does not redefine backend rules or contracts.
+- Coordinates with **contract integrator** when UX requires API shape changes.
+
+## Collaboration
+
+- Skill: `skills/operational-ui-flow-builder.skill.md`
+- Peer: `domain-workflow-architect` for workflow semantics
+
+
+===== C:\ed\templates\ai\agents\specialization-context-architect.agent.md =====
+---
+name: specialization-context-architect
+mission: Define clear boundaries between shared core and profile-specific behavior (tenant, workspace, industry mode, or plan tier).
+scope: architecture + capability maps + client registries
+---
+
+# Agent: Specialization context architect
+
+## Mission
+
+Avoid scattered conditionals and duplicate mini-apps by structuring **shared core** plus **explicit specialization** for different contexts (workspaces, industry profiles, tiers, etc.)—only when the **project context** says those variants exist.
+
+## When to use
+
+- The product has more than one dominant operational mode.
+- Feature gating or dashboards differ materially by profile.
+- Refactors to collapse or clarify `if (type === …)` sprawl.
+
+## Tasks
+
+- Map shared shell vs specialized modules.
+- Align capability resolution, backend guards, and client registries.
+- Keep contracts stable; isolate variant blocks when needed.
+
+## Primary references
+
+- Filled `instructions/project-context.template.md`
+- Filled `instructions/feature-map.template.md`
+- Backend capabilities and client capability hooks
+
+## Deliverables
+
+- Core vs specialization matrix.
+- Feature map updates.
+- Registry or config shape for dashboards/menus.
+- Migration notes for existing code.
+
+## Collaboration
+
+- Skills: `skills/capability-profile-feature-gating.skill.md`, `skills/dashboard-composition-by-profile.skill.md`
+- Peers: `domain-workflow-architect`, `contract-integrator`, `operational-ux-guardian`
+
+
+===== C:\ed\templates\ai\agents\template-contract-boundary-guardian.agent.md =====
+---
+name: template-contract-boundary-guardian
+mission: Proteger fronteras contractuales entre template-backend, template-app y template-web para maximizar reusabilidad sin drift.
+scope: backend dto/contracts + app/web consumers + naming and boundary integrity
+---
+
+# Agent: Template Contract Boundary Guardian
+
+## Por que existe
+La reusabilidad del starter depende de contratos limpios y estables. Si DTOs, hooks, stores y servicios derivan por separado, el template se vuelve fragil.
+
+## Que resuelve
+- Alinea contratos entre backend y consumidores app/web.
+- Protege separacion entre core reusable y dominio especifico.
+- Detecta naming y shape ambiguos antes de propagarlos.
+
+## Cuando invocarlo
+- Cambios de DTO/response/error semantics.
+- Refactors de hooks/services/stores que consumen API.
+- Introduccion de nuevos guards/decorators/permissions o scoping.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. `template-backend/src/**/dto`, `template-backend/src/common`, `template-backend/src/capabilities`
+3. `template-app/src/modules/*/(services|hooks|types)`
+4. `template-web/src/modules/*/(api|hooks|types)`
+
+## Como decide
+1. Backend define enforcement y semantica.
+2. App/web interpretan estados sin adivinar.
+3. Campos compartidos estables; campos de dominio aislados por bloque.
+4. Cualquier cambio contractual debe mapear consumidores impactados.
+
+## Entregables
+- Matriz de frontera contractual por modulo.
+- Riesgos de drift y acciones de correccion.
+- Reglas de naming/ownership para contratos nuevos.
+
+## No debe hacer
+- No tomar decisiones de UX de detalle.
+- No convertir reglas temporales en contrato canonico.
+- No permitir transiciones ambiguas por compatibilidad rapida.
+
+## Colaboracion
+- Agents: `template-system-architect`, `template-web-component-governor`, `template-release-auditor`
+- Skills: `domain-decoupling-pass`, `template-folder-boundary-design`, `template-readiness-audit`
+
+
+===== C:\ed\templates\ai\agents\template-release-auditor.agent.md =====
+---
+name: template-release-auditor
+mission: Auditar si un proyecto quedo realmente listo como template de salida reusable.
+scope: readiness audit + boundary integrity + anti-drift verification
+---
+
+# Agent: Template Release Auditor
+
+## Por que existe
+Un template puede compilar y aun asi no ser clonable ni mantenible. Este agente cierra el gate de salida con criterios de reusabilidad real.
+
+## Que resuelve
+- Verifica avance real hacia template-ready.
+- Detecta coupling residual, wrappers innecesarios y drift documental.
+- Exige evidencia de fronteras y clasificacion por pieza.
+
+## Cuando invocarlo
+- Cierre de fase de hardening por proyecto.
+- Antes de declarar listo un starter (web/app/backend).
+- Cuando hubo cambios de boundaries, contratos o estructura base.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. `agent-workflow.md` (template lane)
+3. Cambios en `template-web`, `template-app`, `template-backend`
+4. Agents/skills ejecutados y sus entregables
+
+## Como decide
+1. Todas las piezas auditadas tienen clase canónica.
+2. Fronteras core/domain/examples/legacy son consistentes.
+3. Hay menos acoplamiento y menos duplicacion respecto al baseline.
+4. El starter es entendible para un equipo nuevo sin conocimiento del dominio original.
+
+## Entregables
+- Veredicto: `PASS` / `PASS WITH RISKS` / `FAIL`.
+- Hallazgos por severidad.
+- Riesgos de clonacion/mantenimiento pendientes.
+- Checklist de gate de salida y acciones siguientes.
+
+## No debe hacer
+- No redisenar arquitectura en esta etapa.
+- No introducir nuevas reglas transversales sin evidencia estable.
+- No sustituir auditoria por opinion subjetiva.
+
+## Colaboracion
+- Agents: `template-system-architect`, `template-web-component-governor`, `template-contract-boundary-guardian`
+- Skills: `template-readiness-audit`, `template-optimization-pass`
+
+
+===== C:\ed\templates\ai\agents\template-system-architect.agent.md =====
+---
+name: template-system-architect
+mission: Definir estrategia canónica para convertir cada proyecto en template de salida reusable.
+scope: template-web + template-app + template-backend + gobierno documental
+---
+
+# Agent: Template System Architect
+
+## Por que existe
+Los tres proyectos tienen piezas reutilizables y deuda acoplada al dominio. Se necesita una estrategia unica para decidir que queda en core, que se adapta y que sale del starter.
+
+## Que resuelve
+- Planea la conversion por fases sin mezclar feature delivery con hardening de template.
+- Define fronteras `core/shared/base`, `domain`, `examples/showcase`, `legacy/quarantine`.
+- Prioriza limpieza de acoplamientos y duplicaciones con impacto real.
+
+## Cuando invocarlo
+- Inicio de auditoria template por proyecto.
+- Cambios de arquitectura de carpetas/boundaries.
+- Cuando hay duda entre extraer, adaptar, dejar como ejemplo o eliminar.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. `agent-workflow.md` (lane de template transformation)
+3. Estructura actual de `template-web/src`, `template-app/src`, `template-backend/src`
+4. Duplicaciones evidentes (wrappers, aliases, contratos paralelos)
+
+## Como decide
+1. Clasifica cada bloque en `REUSABLE/ADAPT/EXAMPLE_ONLY/REMOVE/QUARANTINE`.
+2. Evalua costo de mantener acoplamiento vs costo de extraer.
+3. Prioriza cambios que mejoran clonabilidad y mantenimiento del starter.
+4. Evita redisenos totales sin plan incremental.
+
+## Entregables
+- Mapa de fronteras por proyecto.
+- Backlog priorizado por clase de decision.
+- Secuencia de ejecucion por fases (audit -> extraction -> hardening -> release audit).
+
+## No debe hacer
+- No resolver detalle visual fino de componentes web.
+- No ejecutar sincronizacion contractual campo a campo.
+- No crear documentacion cosmética.
+
+## Colaboracion
+- Agents: `template-web-component-governor`, `template-contract-boundary-guardian`, `template-release-auditor`
+- Skills: `template-readiness-audit`, `template-folder-boundary-design`, `domain-decoupling-pass`
+
+
+===== C:\ed\templates\ai\agents\template-web-component-governor.agent.md =====
+---
+name: template-web-component-governor
+mission: Gobernar la componentizacion de template-web para separar base reusable, componentes compuestos y pantallas de dominio.
+scope: template-web ui architecture + public showcase boundaries
+---
+
+# Agent: Template Web Component Governor
+
+## Por que existe
+`template-web` mezcla componentes reutilizables con componentes de modulo y wrappers delgados. Se necesita una autoridad de decision para evitar proliferacion y preparar un catalogo publico usable.
+
+## Que resuelve
+- Separa primitives/base, composed UI y route-level screens.
+- Detecta wrappers/aliases innecesarios (componentes y rutas).
+- Define que debe entrar al showcase publico y que no.
+
+## Cuando invocarlo
+- Refactors de `template-web/src/components` y `template-web/src/modules`.
+- Diseno de ruta publica de galeria/showcase.
+- Limpieza de duplicacion en modales, hooks o rutas espejo.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. `template-web/src/components`
+3. `template-web/src/modules`
+4. `template-web/src/app/(public)` y `template-web/src/app/(protected)`
+
+## Como decide
+1. Reusable UI en `base/composed`; dominio en `modules`.
+2. Un wrapper sin semantica ni comportamiento propio se elimina o fusiona.
+3. Una ruta que solo renderiza otra pagina se trata como alias temporal.
+4. El showcase solo expone piezas reusables, no flujos de negocio protegidos.
+
+## Entregables
+- Mapa de componentizacion objetivo para `template-web`.
+- Lista de extracciones de componentes base/composed.
+- Definicion de ruta publica de showcase con limites claros.
+
+## No debe hacer
+- No redefinir contratos backend-app.
+- No mover logica de negocio al showcase.
+- No inflar estructura con carpetas vacias.
+
+## Colaboracion
+- Agents: `template-system-architect`, `template-contract-boundary-guardian`, `template-release-auditor`
+- Skills: `reusable-component-extraction`, `public-component-showcase-design`, `template-optimization-pass`
+
+
+===== C:\ed\templates\ai\instructions\app-rules.md =====
+# App design system + UX rules (mobile)
+
+## 1. Role of the app
+
+The app exists to turn business complexity into clear action.
+
+It is not a place to expose internal system complexity.  
+It is a place to make operation, understanding, and decision-making feel natural.
+
+---
+
+## 2. Design mindset
+
+The app must be designed with strong product discipline (clarity, hierarchy, purposeful reduction):
+
+- remove noise
+- keep what matters
+- create obvious hierarchy
+- make actions feel inevitable
+- avoid decorative complexity
+- let beauty emerge from order and usefulness
+
+This does not mean empty minimalism.
+
+It means radical clarity.
+
+---
+
+## 3. UX principle
+
+> The user should feel guided, not burdened.
+
+---
+
+## 4. What the app should feel like
+
+The app should feel:
+
+- fast
+- clear
+- calm
+- reliable
+- operational
+- elegant
+- lightweight
+- useful
+
+It should not feel:
+
+- cluttered
+- noisy
+- technical
+- enterprise-heavy
+- overdecorated
+- confusing
+- “feature-rich” in a chaotic way
+
+---
+
+## 5. App shell
+
+New screens must integrate with the established app shell.
+
+Respect the existing product structure:
+
+- main layout
+- app header
+- app menu
+- bottom navigation
+- offline banners
+- global loaders
+- session bootstrap behavior
+- version checks
+- push initialization
+- active business context
+
+Do not create disconnected micro-design systems inside the app.
+
+---
+
+## 6. Modular app structure
+
+The app should be organized by domain.
+
+Typical structure:
+
+```txt
+src/modules/
+  auth/
+  user/
+  accounts/
+  <your-domain-modules>/
+  system-design/
+  starter-public/
+  starter-protected/
+```
+
+Each module may include:
+
+* screens
+* components
+* hooks
+* services
+* types
+* utils
+
+Organize around business meaning, not around arbitrary UI fragments.
+
+---
+
+## 6.1 Dynamic domain UI rule
+
+The app UI must adapt to the active domain or profile (when your product defines one) while preserving a coherent shell.
+
+This means:
+
+* shared patterns stay stable (layout, cards, loaders, selector behavior, feedback states)
+* domain modules adapt labels, flows, and data entry priorities
+* screens should render according to active capabilities and context
+* avoid hardcoded assumptions that all workspaces use the same entities
+
+Do not duplicate the whole app per domain.
+
+Build one dynamic product language with domain-specific content.
+
+---
+
+## 7. Reuse-first rule
+
+Before creating a new component:
+
+1. check if a pattern already exists
+2. check if an existing component can be extended safely
+3. only create a new one when it adds real clarity
+
+Prefer reuse over proliferation.
+
+Important reusable patterns include:
+
+* layout shells
+* cards
+* loaders
+* action flows
+* capability gates
+* limit banners
+* headers
+* modals
+* selectors
+* summary blocks
+
+---
+
+## 8. Screen hierarchy
+
+Every screen should have a visible hierarchy:
+
+1. context
+2. primary information
+3. primary action
+4. secondary actions
+5. expandable detail
+6. technical or low-priority metadata last
+
+Do not let screens compete with themselves.
+
+---
+
+## 9. One primary intention per screen
+
+Each screen must have one dominant intention.
+
+Examples:
+
+* register
+* review
+* confirm
+* pay
+* filter
+* close
+* compare
+* unlock
+* understand summary
+
+If a screen tries to do everything, it will communicate nothing clearly.
+
+---
+
+## 10. Visual principles
+
+### 10.1 Clarity before decoration
+
+Every visual element must help understanding.
+
+### 10.2 Hierarchy before quantity
+
+More blocks do not equal more value.
+
+### 10.3 Space before saturation
+
+Breathing room improves confidence and speed.
+
+### 10.4 One strong CTA
+
+The main action should be obvious.
+
+### 10.5 Consistency before novelty
+
+Do not invent a new pattern for every feature.
+
+### 10.6 Feedback must always exist
+
+The user should never wonder whether something happened.
+
+---
+
+## 11. Copywriting rules
+
+Interface copy must be:
+
+* short
+* direct
+* useful
+* human
+* operational
+
+Good examples:
+
+* Register purchase
+* Pending payment
+* No connection
+* Retry
+* Available in Premium
+* Last closing
+
+Avoid:
+
+* internal jargon
+* overly technical labels
+* vague generic text
+* robotic error wording
+* long explanatory paragraphs inside operational screens
+
+The UI should sound like a practical business assistant, not a tired machine manual.
+
+---
+
+## 12. Capability and plan gating UX
+
+When a feature is unavailable, the app must handle it with clarity and elegance.
+
+Possible strategies:
+
+* hide it if showing it creates confusion
+* show it locked if that helps communicate value
+* show a limit banner
+* show plan comparison
+* show upgrade CTA
+* record upgrade intent when useful
+
+Do not frustrate the user without explanation.
+
+Domain-specific feature availability must be explicit and understandable.
+
+---
+
+## 13. Limits as UX
+
+A plan limit should not feel like a system failure.
+
+When a user hits a limit, the interface should make clear:
+
+* what happened
+* why it happened
+* whether anything can still be done
+* whether upgrading changes the outcome
+
+Limits are part of product design, not just permission logic.
+
+---
+
+## 14. Feedback immediacy rule
+
+Any important action must provide clear visible state.
+
+Minimum states:
+
+* loading
+* success
+* error
+* next possible step
+
+Never leave the user guessing whether a tap worked.
+
+---
+
+## 15. ActionLoader and long operations
+
+Use `ActionLoader` or equivalent multi-step progress feedback when operations are long or meaningfully staged.
+
+Examples:
+
+* creating a purchase
+* registering a payment
+* creating a product
+* inventory closure or audit
+* synchronization flows
+* any operation with noticeable latency or important intermediate steps
+
+Steps must reflect real process meaning.
+Do not fabricate steps just to animate waiting.
+
+---
+
+## 16. Input rules
+
+Operational inputs deserve special care.
+
+### 16.1 Money inputs
+
+* format in real time
+* remain easy to edit
+* preserve readability
+
+### 16.2 Quantity inputs
+
+* use appropriate keyboard
+* validate clearly
+* reduce trivial mistakes
+
+### 16.3 Date and state selectors
+
+* use sensible defaults
+* minimize taps
+* avoid unnecessary decision burden
+
+---
+
+## 17. State management rules
+
+Recommended separation:
+
+* **React Query** for remote server data
+* **Zustand** for lightweight global state
+* **local component state** for local screen interaction
+
+Do not duplicate server state into global stores without strong reason.
+
+Do not turn Zustand into a dumping ground.
+
+---
+
+## 18. Offline and sync awareness
+
+The app must be designed assuming network conditions may fail.
+
+Every feature should consider:
+
+* what happens when offline
+* what is stored locally
+* what is queued
+* how retry works
+* how pending state is communicated
+* how duplicates are avoided
+
+Offline-aware design is not optional realism.
+It is part of product trust.
+
+---
+
+## 19. Navigation rules
+
+Navigation must feel obvious.
+
+Rules:
+
+* critical actions should not be hidden
+* routes should not feel like dead ends
+* depth should stay reasonable
+* context should remain visible when useful
+* transitions should preserve orientation
+
+The user should never feel lost inside the product.
+
+---
+
+## 20. Feedback collection as product input
+
+User feedback is not decorative.
+
+If the product has moments to ask whether something felt easy, hard, useful, or blocked, that is valuable signal.
+
+Use feedback intentionally:
+
+* not constantly
+* not randomly
+* not intrusively
+
+But do not waste the chance to learn from real use.
+
+---
+
+## 21. Accessibility in practical terms
+
+Even if the product is not built from a formal accessibility-first checklist, it must still respect real-world usability:
+
+* adequate contrast
+* readable sizes
+* comfortable touch targets
+* state not communicated by color alone
+* short flows
+* visible primary actions
+
+Design for stressed humans, not idealized demos.
+
+---
+
+## 22. App testing priorities
+
+Prioritize testing:
+
+1. hooks with real logic
+2. capability / limit / plan gating behavior
+3. critical navigation flows
+4. important conditional rendering
+5. reusable components involved in operational tasks
+
+Avoid overreliance on low-value snapshots.
+
+Test behavior that matters.
+
+---
+
+## 23. What must never happen in the app
+
+Never:
+
+* overload screens with too many equal-weight blocks
+* create visually disconnected feature islands
+* show cryptic technical errors
+* hide the primary action
+* ignore plan and capability context in UX
+* duplicate backend logic carelessly
+* make beautiful screens that are slow, dense, or unclear
+* let a user wonder whether the system responded
+
+---
+
+## 24. Final app rule
+
+The app must make the business feel more manageable.
+
+If a screen increases stress, hesitation, or confusion, it is not aligned with product intent.
+
+---
+
+## 25. Multi-profile app architecture rule (when applicable)
+
+If the product serves more than one profile, workspace type, or industry mode, structure the app as:
+
+1. **shared shell** (layout, navigation primitives, feedback states, attachment patterns)
+2. **profile registry/config** (main intent, primary CTA, widget order, route priorities)
+3. **specialized modules/screens** only when the dominant workflow truly differs
+
+Avoid scattering profile-specific if/else checks across unrelated screens.
+
+---
+
+## 26. Main dashboard composition rule
+
+Main dashboard should use:
+
+- common shell
+- registry by operational profile (when applicable)
+- reusable widgets with explicit contracts
+
+Main dashboard must answer the dominant operational question for the active profile or workspace context.
+
+---
+
+## 27. Deep analytics reuse rule
+
+Deep analytics may share blocks across profiles when semantics are compatible.
+
+Do not force the same home/dashboard structure just because analytics blocks are reusable.
+
+---
+
+## 28. Navigation and CTA coherence rule
+
+For each profile (when applicable), define explicit:
+
+- menu priorities
+- primary CTA routes
+- secondary operational routes
+
+The app must keep orientation clear when switching between workspace or tenant contexts.
+
+---
+
+## 29. New profile onboarding rule (when applicable)
+
+Adding a new profile or mode in the app requires:
+
+1. type and feature mapping
+2. dashboard registry entry (if used)
+3. menu/bottom bar adaptation
+4. primary flow route checks
+5. blocked/unavailable state handling
+6. validation of shared vs specialized screens
+
+No new profile should be introduced by only adding enum labels.
+
+---
+
+## 30. Operational completion rule
+
+A new operational screen or flow is incomplete if it does not include all of the following:
+
+1. one clear primary intention
+2. visible operational state
+3. explicit blocked/pending/ready states
+4. immediate user feedback after important actions
+5. contextual help using the existing global help pattern
+6. safe route entry and safe route exit
+7. coherence with app shell and existing reusable patterns
+
+Do not ship operational UI that depends on hidden assumptions or missing explanation.
+
+
+===== C:\ed\templates\ai\instructions\backend-rules.md =====
+# Backend engineering rules (starter-aligned)
+
+## 1. Role of the backend
+
+The backend is the **source of truth** for domain rules, data integrity, access control, and stable contracts for clients.
+
+The frontend may guide experience; the backend **decides** what is allowed and what is true.
+
+---
+
+## 2. Core principle
+
+> No critical rule should depend only on the client behaving correctly.
+
+---
+
+## 3. Modularity
+
+Organize by **bounded context** or domain module (auth, users, accounts, capabilities, uploads, etc.—extend as your product grows).
+
+Preferred structure per module:
+
+```txt
+src/
+  <module>/
+    <module>.module.ts
+    <module>.controller.ts
+    <module>.service.ts
+    dto/
+    schemas/
+    guards/
+    constants/
+    utils/
+```
+
+Do not collapse boundaries without a strong reason.
+
+---
+
+## 4. Controllers and services
+
+- Controllers: HTTP boundaries, validation pipes, orchestration.
+- Services: business logic, invariants, persistence coordination.
+
+Keep controllers thin.
+
+---
+
+## 5. Validation and schemas
+
+Validate all incoming data. Keep DTOs and persistence schemas aligned with real rules, not with temporary UI shapes.
+
+---
+
+## 6. Persistence
+
+- stable field names
+- explicit states where they matter
+- timestamps when they improve traceability or auditing
+- indexes justified by query patterns
+- avoid shaping the database only for one screen
+
+---
+
+## 7. Access model (layered)
+
+Design access in layers appropriate to your product:
+
+### Roles
+
+Who may **attempt** a class of actions.
+
+### Account-level permissions
+
+Fine-grained toggles for account-scoped behavior (keep them coherent; avoid boolean sprawl).
+
+### Capabilities and plans
+
+What is **enabled** for the account, workspace, or subscription tier.
+
+Every sensitive feature should answer:
+
+1. What enables it?
+2. Is it tied to a plan, role, capability, or tenant rule?
+3. What happens when access is blocked?
+
+---
+
+## 8. Plan limits
+
+Limits are business rules. Each should have a clear source, name, user-visible consequence, and structured response—avoid generic “forbidden” for limit cases.
+
+---
+
+## 9. Upgrade-aware behavior
+
+If the product monetizes, the backend should explicitly resolve plan, entitlements, and structured block reasons for clients to render.
+
+---
+
+## 10. Domain examples (illustrative only)
+
+The following are **patterns** many products use; implement only what your domain map requires:
+
+- **Commerce-style flows** — orders, payments, stock movements may need partial states, history, and linkage between documents.
+- **Inventory-style** — material changes should be explicit and traceable, not silent.
+- **Obligations** — separate “what happened” from “what is still owed” when both exist in your model.
+
+Adapt naming and modules to **your** glossary, not to any legacy app.
+
+---
+
+## 11. Traceability
+
+When the domain requires it, important actions should leave reconstructable traces (events, audit fields, or append-only history). Prefer explicit operations over hidden side effects.
+
+---
+
+## 12. Contracts with clients
+
+Responses should be predictable: consistent naming, stable shapes, classifiable errors, reason codes when helpful. Clients should not guess business meaning from ambiguous payloads.
+
+If the product has multiple profiles or modes, contracts may expose **stable shared fields** plus clearly named specialized blocks.
+
+---
+
+## 13. Error handling
+
+Differentiate at least: validation, not found, unauthorized/forbidden, limit reached, conflict, internal failure. Do not leak sensitive internals.
+
+---
+
+## 14. Testing priorities
+
+Prioritize:
+
+1. services with domain logic
+2. guards and access checks
+3. capability and limit enforcement
+4. critical end-to-end flows defined in your feature map
+
+---
+
+## 15. What must never happen
+
+Never:
+
+- put heavy logic only in controllers
+- trust the client for critical validation
+- duplicate access rules without ownership
+- mutate balances or stock without clear rules
+- return vague errors for meaningful business blocks
+- couple unrelated domains for short-term speed
+
+---
+
+## 16. Final backend rule
+
+The backend must make the product **trustworthy**. If the system cannot enforce its own truth, the product becomes decorative.
+
+---
+
+## 17. Profile-aware or multi-tenant backends
+
+When the product has multiple workspace types or tenants:
+
+- separate shared cross-cutting services from profile-specific orchestration
+- avoid one giant service accumulating unrelated conditionals
+- keep feature maps consistent across capability resolution, guards, and emitted context for clients
+
+---
+
+## 18. Cross-layer release gate
+
+Backend changes that enable, block, or condition operational behavior should pass a cross-layer gate (see `agent-workflow.md`):
+
+1. DTO validation matches the real rule
+2. routes and parameters are explicit
+3. services enforce the rule
+4. persistence matches ownership and states
+5. client compatibility is explicit
+6. blocked responses are structured for clear UI
+7. domain ownership is correct (tenant vs account vs user scope)
+
+No backend feature is complete if clients cannot interpret its states safely.
+
+
+===== C:\ed\templates\ai\instructions\domain-map.template.md =====
+# Domain map (template)
+
+> Describes the **active domain** of the instantiated product. Not reusable canon—fill per project.
+
+## Ubiquitous language
+
+Align with `glossary.template.md`. Add terms that appear in UI, APIs, and persistence.
+
+## Core entities
+
+For each entity: name, id strategy, owner scope (user / account / workspace), lifecycle notes.
+
+| Entity | Description | Owner scope |
+|--------|-------------|-------------|
+|        |             |             |
+
+## Aggregates and invariants
+
+List aggregates (if using DDD) or critical consistency boundaries:
+
+-
+
+## Integrations
+
+External systems, webhooks, file storage, email/SMS, payments:
+
+-
+
+## Bounded context boundaries
+
+What **must not** leak across contexts (forbidden imports / shared-kernel rules):
+
+-
+
+## Events or traceability (if used)
+
+What must be auditable or evented:
+
+-
+
+
+===== C:\ed\templates\ai\instructions\feature-map.template.md =====
+# Feature map (template)
+
+> Maps **capabilities**, routes, and backend exposure for the instantiated product.
+
+## Feature matrix
+
+| Feature / flow | Surfaces (web / app) | Backend module | Capability or gate | Notes |
+|----------------|----------------------|----------------|--------------------|-------|
+|                |                      |                |                    |       |
+
+## Navigation map (clients)
+
+- Public routes:
+- Authenticated routes:
+- Admin or elevated routes:
+
+## API map (backend)
+
+Base path: `/api`
+
+| Area | Controllers or tags | Auth | Notes |
+|------|---------------------|------|-------|
+|      |                     |      |       |
+
+## Plan or tier behavior (if any)
+
+| Tier | Limits | Unlocked features |
+|------|--------|---------------------|
+|      |        |                     |
+
+## Out of scope (explicit)
+
+Features intentionally **not** in v1:
+
+-
+
+
+===== C:\ed\templates\ai\instructions\glossary.template.md =====
+# Glossary (template)
+
+> Per-product vocabulary. Keeps UI, APIs, and docs aligned.
+
+| Term | Definition | Avoid confused with |
+|------|------------|---------------------|
+|      |            |                     |
+
+## UI labels
+
+Preferred capitalization and language (e.g. Spanish vs English):
+
+-
+
+## API naming
+
+Pluralization, resource names, query param conventions:
+
+-
+
+## Forbidden legacy terms
+
+Terms from **previous** products must not appear in new copy or public contracts:
+
+-
+
+
+===== C:\ed\templates\ai\instructions\instructions.md =====
+# Starter — Instructions (canonical entry)
+
+## Purpose
+
+This file is the entry point for any human or coding agent working on **the instantiated project** (the product you are building on top of `template-web`, `template-app`, and/or `template-backend`).
+
+The codebase evolves through coordinated layers:
+
+1. **Product discipline** (`product-rules.md`)
+2. **Backend engineering** (`backend-rules.md`)
+3. **App / web UX and design system** (`app-rules.md`, `template-web-design-system.md` when working on web)
+
+Read these before implementing anything meaningful.
+
+---
+
+## Before the first feature: project instantiation
+
+When starting a **new product** from this repo, complete **Phase 1 — instantiation** (see `agent-workflow.md` and **`ai/START_NEW_PROJECT.md`**) before deep feature work.
+
+Fill or derive from the templates in `instructions/*.template.md`:
+
+- `project-context.template.md`
+- `domain-map.template.md`
+- `feature-map.template.md`
+- `glossary.template.md`
+
+Copy each to a project-local file (for example `ai/instructions/project-context.md`) or merge into your product wiki. The templates are **not** rules; they capture identity, domain, surfaces, auth, tenancy, and capabilities for **your** product.
+
+---
+
+## Mandatory reading order
+
+Before making changes, read in this order:
+
+1. `instructions/instructions.md` (this file)
+2. `instructions/product-rules.md`
+3. `instructions/backend-rules.md`
+4. `instructions/app-rules.md` (mobile); for web, also `instructions/template-web-design-system.md`
+5. `instructions/template-governance-rules.md` when the task is template extraction, hardening, or reusability work
+6. `agent-workflow.md` for execution sequence and audit gates
+
+Do not skip layers.
+
+A change that works technically but violates product clarity is wrong.  
+A change that looks good visually but breaks architectural consistency is wrong.  
+A change that solves one screen but damages system coherence is wrong.
+
+---
+
+## How to think about the system
+
+The starter is not “just CRUD.” Treat it as a system that may include:
+
+- bounded contexts and domain modules
+- roles and permissions
+- account capabilities and plan limits
+- upgrade paths
+- contextual navigation
+- traceability
+- offline-aware flows (app)
+- reusable UI patterns
+- a consistent product voice
+
+Do not reduce the product to isolated screens. Use **`instructions/project-context.template.md`** (once filled) as the source of what “the product” means for this clone.
+
+---
+
+## Optional: multiple profiles, tenants, or industry modes
+
+If **your** product serves more than one kind of customer, workspace, or industry mode:
+
+- keep a **shared shell** (auth, layout, shared components, conventions)
+- drive differences from **explicit configuration** (capabilities, feature maps, registries), not from scattered conditionals
+- adapt vocabulary and primary flows to the **active context** described in your domain map
+
+If the product is **single-domain**, keep the architecture simple; do not import multi-profile machinery “just in case.”
+
+---
+
+## Design philosophy
+
+Build with strong product discipline:
+
+- clarity over decoration
+- reduction over accumulation
+- coherence over novelty
+- elegance through usefulness
+- hierarchy over noise
+- confidence through simplicity
+
+This does **not** mean empty minimalism. It means removing friction until the product feels obvious.
+
+---
+
+## Cross-layer implementation rule
+
+Every important change must answer:
+
+1. What real problem does this solve?
+2. Which bounded context or module does it belong to?
+3. Which layer(s) does it affect?
+4. What contracts does it touch?
+5. What roles, permissions, capabilities, or limits are involved?
+6. What should the user see, feel, or understand after the change?
+7. How will it be tested?
+8. How does it stay consistent with the product language in your filled context templates?
+
+If these cannot be answered clearly, implementation is premature.
+
+---
+
+## Rules for coding agents
+
+Before implementing:
+
+1. Read the rule documents that apply to your task.
+2. Identify whether the change is product, backend, app, web, or cross-layer.
+3. Search for existing patterns before creating new ones.
+4. Respect modular boundaries and folder ownership.
+5. Respect the current shell and UX language.
+6. Respect roles, permissions, capabilities, and plan limits when they exist.
+7. Do not break backend ↔ client contracts.
+8. Keep naming and copy clear.
+9. Prefer small safe changes over chaotic rewrites.
+10. If you find structural inconsistency, propose improvement instead of patching blindly.
+11. Align with the **active domain** and feature map defined for this project (when those files exist).
+
+---
+
+## Mandatory implementation audit rule
+
+No meaningful change is finished just because it compiles.
+
+Every significant change must close with an explicit implementation audit (see `agent-workflow.md`).
+
+Minimum audit scope:
+
+1. entry point and real navigation path
+2. backend–client contract consistency
+3. DTOs, schemas, and persistence alignment
+4. roles / capabilities / plan gating behavior
+5. help keys and real help content (if the product uses them)
+6. loading / success / error / blocked states
+7. readiness as enforceable behavior, not cosmetic
+8. backend enforcement for critical rules (not frontend-only)
+9. impacted consumers and dependent flows
+10. validation commands actually executed
+
+A cross-layer change is complete only when product, backend, clients, contracts, and guidance are operationally coherent.
+
+---
+
+## Canonical location of AI governance
+
+**Source of truth** for agent behavior in this repository:
+
+- `/ai/agent-workflow.md`
+- `/ai/instructions/*.md` and `/ai/instructions/*.template.md`
+- `/ai/agents/*.agent.md`
+- `/ai/skills/*.skill.md`
+
+Historical copies under `template-app/ai/` are **deprecated**; use the repo root `ai/` tree only.
+
+---
+
+## Template transformation mode
+
+When the task is to turn code into a reusable template or to harden `template-web` / `template-app` / `template-backend`, follow `instructions/template-governance-rules.md`.
+
+Prioritize:
+
+1. reusable boundaries over feature velocity
+2. decoupling domain-specific naming and behavior
+3. stable contracts and folder ownership
+4. removal or quarantine of noisy wrappers and duplicated thin layers
+5. a clean path for cloning new products
+
+
+===== C:\ed\templates\ai\instructions\product-rules.md =====
+# Product discipline (for projects built on this starter)
+
+## 1. What this document is
+
+These rules apply to **the product you are building** after you instantiate the starter. They are not tied to any former domain.
+
+Use your filled **`project-context.template.md`**, **`domain-map.template.md`**, and **`glossary.template.md`** to resolve vocabulary, entities, and priorities.
+
+---
+
+## 2. Core mission
+
+The product should help its users **understand, act, and decide** with less friction.
+
+Typical questions (adapt to your domain):
+
+- What is the current state that matters?
+- What actions are available now?
+- What is blocked and why?
+- What changed recently and can be trusted?
+
+If the product does not make those answers easier, it is drifting.
+
+---
+
+## 3. Product principle
+
+> If the primary user cannot tell what to do next in a few seconds, the experience is not finished.
+
+---
+
+## 4. Values
+
+Optimize for:
+
+- clarity
+- speed
+- confidence
+- usefulness
+- low cognitive load
+- traceability (when the domain requires it)
+- sustainable evolution
+
+---
+
+## 5. Product truth
+
+Most users do not need more features; they need **less confusion**.
+
+Reduce:
+
+- operational noise
+- duplicated work
+- uncertainty
+- avoidable mistakes
+- friction during daily use
+
+---
+
+## 6. Decision framework
+
+Evaluate features, screens, and flows with questions such as:
+
+1. Does this improve clarity?
+2. Does this reduce friction?
+3. Does this support a real decision or action?
+4. Does this match how the domain works in reality?
+5. Does this fit the product language defined in your glossary?
+6. Can it be understood without training?
+
+If most answers are no, reject or redesign.
+
+---
+
+## 7. Not just CRUD
+
+Treat the system as including, when applicable:
+
+- domain logic and invariants
+- roles and permissions
+- capabilities and plan limits
+- upgrade or entitlement mechanics
+- context-aware navigation
+- feedback loops
+- traceability
+- offline-aware operation (clients)
+
+Never design as if the product were only “create, list, edit, delete.”
+
+---
+
+## 8. Shared shell vs domain behavior
+
+Separate:
+
+- **Shared system behaviors** — navigation patterns, trust, feedback, attachments, shared components
+- **Domain behaviors** — entities, workflows, priorities, vocabulary
+
+For each feature ask:
+
+- what is universal to this product?
+- what is specific to a tenant profile, industry mode, or workspace type?
+- which capabilities or flags enable that behavior?
+
+Do not force every customer into one rigid operational model unless your context says so.
+
+---
+
+## 9. Intention-driven modules
+
+Modules should serve a **clear user intention** (register X, review Y, resolve Z), not only expose an entity.
+
+---
+
+## 10. Coherence
+
+The product should feel like **one product**:
+
+- naming and copy
+- screen structure and hierarchy
+- error and loading states
+- upgrade or limit messaging
+- navigation behavior
+
+Avoid fragmented mini-products inside the same app or site.
+
+---
+
+## 11. Traceability
+
+When the domain requires it, prefer systems that can explain **how** important states were reached, not only final snapshots.
+
+---
+
+## 12. Real-world usage
+
+Design for stressed users, imperfect connectivity, and messy data—unless your context explicitly targets a different audience.
+
+---
+
+## 13. Plans, limits, and monetization
+
+When the product uses plans or limits:
+
+- communicate blocks with clarity and dignity
+- blocked states should feel understandable, not broken
+- upgrade paths should feel like progression, not punishment
+
+---
+
+## 14. Product language
+
+Prefer language that is direct, short, useful, calm, and appropriate to the domain. Avoid engineering jargon in user-facing copy.
+
+---
+
+## 15. Growth
+
+New decisions should allow future growth. Avoid local fixes that create systemic inconsistency or names that cannot scale.
+
+---
+
+## 16. Final product rule
+
+The product should feel like **complexity removed on the user’s side**, not complexity disguised as software.
+
+---
+
+## 17. Optional: dominant operation per profile
+
+If your product defines **profiles** (e.g. industry modes, workspace types), each profile may define a **dominant operation** (the thing users care about first).
+
+Primary surfaces (home, dashboard, main CTA) should reflect that dominant operation for the active profile. Deep analytics or secondary areas may reuse cross-cutting blocks when semantics align.
+
+---
+
+## 18. Adding a new profile or mode
+
+Do not add a new profile with only an enum label. Include at least:
+
+1. operational intent
+2. dominant entities and state model
+3. feature map and gating
+4. primary dashboard or landing composition (if applicable)
+5. backend contracts (summary / detail / mutations)
+6. client navigation or menu adaptation
+7. traceability expectations (if any)
+
+
+===== C:\ed\templates\ai\instructions\project-context.template.md =====
+# Project context (template)
+
+> Copy to `project-context.md` (or your wiki) and fill before major feature work.
+
+## Identity
+
+- **Product name**:
+- **One-line value proposition**:
+- **Primary users** (roles):
+- **Environments** (dev/stage/prod URLs or notes):
+
+## Surfaces
+
+- **Web** (`template-web`): Y/N — purpose:
+- **Mobile app** (`template-app`): Y/N — purpose:
+- **Backend** (`template-backend`): Y/N — API base path:
+
+## Auth model
+
+- Mechanism (e.g. JWT, session, OAuth):
+- Identity fields (phone, email, SSO, …):
+- Refresh / logout rules (summary):
+
+## Tenancy and scope
+
+- **Multitenancy**: none / account / workspace / hybrid — describe:
+- **Default scope** for data (user, account, workspace):
+
+## Capabilities and entitlements
+
+- How capabilities or plans are represented (backend + clients):
+- List of base capabilities for this product (or “TBD”):
+
+## Bounded contexts
+
+List modules or contexts and one-line ownership each:
+
+| Context | Owns (entities / rules) |
+|--------|-------------------------|
+|        |                         |
+
+## Starter vs product code
+
+- What stays **core starter** (do not couple to domain):
+- What is **example only** (safe to delete or replace):
+- What is **product-specific** (your IP):
+
+## Links
+
+- Filled **domain map**: (path)
+- Filled **feature map**: (path)
+- Filled **glossary**: (path)
+
+
+===== C:\ed\templates\ai\instructions\template-governance-rules.md =====
+# Template Governance Rules
+
+## Purpose
+
+Define the canonical governance for converting `template-web`, `template-app`, and `template-backend` into reusable output templates that are safe to clone as new product starters.
+
+This document is transversal.
+
+Do not duplicate these rules in workflow/agents/skills. Those artifacts execute this policy.
+
+## Scope
+
+Applies when a task involves at least one of:
+
+- template extraction
+- template hardening
+- reusable componentization
+- domain decoupling
+- starter cleanup for cloning
+
+## Canonical decision classes
+
+Every audited piece (module, component, hook, service, DTO, route, store, guard, decorator) must be classified in exactly one class:
+
+1. `REUSABLE`: keep as template core
+2. `ADAPT`: keep but refactor/rename/boundary-adjust
+3. `EXAMPLE_ONLY`: keep as example/reference, not mandatory dependency
+4. `REMOVE`: delete because it adds noise or drift
+5. `QUARANTINE`: isolate temporarily until design stabilizes
+
+No implementation should proceed without explicit class assignment.
+
+## Boundary model (mandatory)
+
+Use this boundary model across web/app/backend:
+
+- `core/shared/base`: generic reusable primitives and cross-cutting contracts
+- `domain`: business-specific behavior
+- `examples/showcase`: demonstrative paths and sample flows
+- `legacy/quarantine`: unstable or transitional pieces
+
+Rules:
+
+1. domain logic must not leak into base primitives
+2. showcase/examples must not become runtime dependencies for core flows
+3. wrappers that only rename/re-export behavior are not valid boundaries
+4. route aliases that only mirror another screen are migration artifacts, not template architecture
+
+## Coupling signals (must be audited)
+
+Treat these as coupling/debt indicators:
+
+- domain names hardcoded in shared UI/hooks/services
+- business-specific copy in reusable components
+- duplicated modal/hook wrappers with no behavior
+- duplicated API wrappers with identical behavior
+- mixed ownership in one folder (UI + contracts + side effects without boundary)
+- cross-layer contract drift (DTO vs app types/hook assumptions)
+- route-level aliases that only render another page
+
+## Public component showcase policy (web)
+
+If a public showcase route is introduced:
+
+1. it must be explicitly public and isolated from protected business data
+2. it must catalogue reusable components, not domain pages
+3. each showcased component must document intent, variants, states, and usage constraints
+4. showcase data must be local mock/demo-safe, never production-coupled
+5. showcase is a template quality tool, not a mini-app
+
+## Contract boundary policy (cross-template)
+
+Contracts must keep clear ownership:
+
+- backend: DTO validation, enforcement, reason semantics
+- app/web: typed consumers, rendering states, user-facing interpretation
+
+No silent contract transitions.
+
+Any changed contract requires explicit impact mapping in consumers.
+
+## Execution gates
+
+A template change is not complete unless all gates pass:
+
+1. classification gate (`REUSABLE/ADAPT/EXAMPLE_ONLY/REMOVE/QUARANTINE`)
+2. boundary gate (core/domain/examples/legacy ownership clear)
+3. duplication gate (redundant wrappers/aliases removed or justified)
+4. contract gate (backend-app-web alignment where applicable)
+5. starter gate (project remains clone-friendly, minimal hidden coupling)
+
+## Documentation proportionality
+
+Only create or modify documents when one of these is true:
+
+1. a reusable transversal rule changed -> `instructions`
+2. a reusable specialized decision role is needed -> `agents`
+3. a reusable execution recipe is stable -> `skills`
+4. task sequence changed -> `agent-workflow`
+
+Do not create documents for temporary hypotheses.
+
+
+===== C:\ed\templates\ai\instructions\template-web-design-system.md =====
+# template-web — system design y `src/components`
+
+## Ubicación canónica
+
+- **Primitives:** `template-web/src/components/ui/` (Button, Input, Card, …)
+- **Composed reusables:** `template-web/src/components/<Nombre>/` (Modal, SideNav, ImageUpload, …)
+- **Dominio:** `template-web/src/modules/<modulo>/components`
+- **Vitrina pública:** ruta **`/system-design`** (`src/app/system-design/`), sin auth, datos mock, `noindex`
+
+## Modal unificado
+
+- Un solo **`@/components/Modal`** con `footer`, `size="narrow"`, `backdrop="soft"` (reemplaza el antiguo `AppModal`).
+- Consumidores migrados: `LeaderEditorModal`, `ProspectEditorModal`.
+
+## Política
+
+- No duplicar overlays: modales de módulo deben converger a `Modal` cuando el flujo lo permita (ver backlog en la propia `/system-design` → Legacy).
+
+## Obsoleto
+
+- Carpeta `template-web/templates/` y alias `@templates/*` — eliminados.
+- Ruta `/design-system` — sustituida por `/system-design`.
+
+
+===== C:\ed\templates\ai\skills\backend-app-contract-sync.skill.md =====
+---
+name: backend-app-contract-sync
+purpose: Keep backend and client contracts consistent and safe across layers.
+---
+
+# Skill: Backend–client contract sync
+
+## Why it exists
+
+Cross-layer changes (DTOs, responses, hooks, screens) create debt when only one layer is updated.
+
+## What it solves
+
+- Aligns DTO/schema/controller/service with client types, hooks, and UI.
+- Prevents silent payload and response breakage.
+- Aligns cache invalidation and consumption of new fields.
+
+## When to use
+
+- New or changed endpoints.
+- Enum, state, or field changes in responses.
+- Error semantics the client must interpret.
+
+## Expected inputs
+
+- Backend diff or contract specification.
+- List of client consumers for the endpoint.
+
+## Internal steps
+
+1. Build a contract table (field, type, required, semantics).
+2. Adjust backend (DTO + service + controller + schema if applicable).
+3. Adjust clients (`*.api.ts`, hooks, types, screens).
+4. Review cache invalidation (e.g. React Query keys).
+5. Review offline/sync when mutations apply.
+6. Validate expected errors (validation, blocked, conflict).
+
+## Deliverables
+
+- Final contract matrix.
+- Files touched per layer.
+- Cross-layer validation checklist.
+
+## Rules
+
+- Avoid ambiguous transitional contracts.
+- Do not duplicate endpoints for UI convenience only.
+- If the backend changes, update **all** consumers.
+
+## Common mistakes
+
+- Updating types without hooks or mutations.
+- Breaking field names used by cache keys or UI.
+- Ignoring date/money formats and parsing on clients.
+
+
+===== C:\ed\templates\ai\skills\business-workflow-design.skill.md =====
+---
+name: business-workflow-design
+purpose: Model business workflows before coding, for the active domain.
+---
+
+# Skill: Business workflow design
+
+## Why it exists
+
+Costly changes fail when implementation runs ahead of clear states, rules, and traceability.
+
+## What it solves
+
+- Flow design for operational modules (domain-specific).
+- Explicit operational rules per entity.
+- Impact mapping across backend, clients, and capabilities.
+
+## When to use
+
+- New domain module.
+- Operational flow changes with states or events.
+- Functional refactor of an existing process.
+
+## Expected inputs
+
+- Functional requirement.
+- Target module paths in **the current** backend and client trees.
+- Active context: enabled features, capabilities, tenancy rules.
+
+## Internal steps
+
+1. Read `agent-workflow.md` and relevant `instructions/*.md`.
+2. Define primary operational intent.
+3. List root entity and related entities.
+4. Define valid states and transitions.
+5. Define minimum traceable events.
+6. Define blocks by role, capability, or state.
+7. Define contract impact backend ↔ clients.
+
+## Deliverables
+
+- Short workflow doc (state, transition, event, block).
+- Business rules in plain operational language.
+- Per-layer change list.
+
+## Rules
+
+- Reuse-first; avoid parallel modules.
+- Backend owns invariants.
+- Respect capability/profile maps, not global hardcoding.
+
+## Common mistakes
+
+- Modeling only the happy path.
+- Confusing financial state with operational state.
+- Skipping blocked paths and user-visible messages.
+
+
+===== C:\ed\templates\ai\skills\capability-profile-feature-gating.skill.md =====
+---
+name: capability-profile-feature-gating
+purpose: Apply consistent feature gating by capability, plan, or operational profile across backend and clients.
+---
+
+# Skill: Capability / profile feature gating
+
+## Required references
+
+1. `instructions/instructions.md`
+2. `instructions/product-rules.md`
+3. `instructions/backend-rules.md`
+4. `instructions/app-rules.md` (and web design system when UI is web)
+5. Filled `feature-map.template.md` (per project)
+
+## Why it exists
+
+Products with multiple workspaces, tiers, or profiles need endpoints, guards, and navigation to stay aligned with the **active context**—without drift between layers.
+
+## What it solves
+
+- Coherent feature maps per profile or tier.
+- Sync between backend guards and client visibility / lock states.
+- Prevention of routes that appear supported but are not backed by the API or domain.
+
+## When to use
+
+- New feature or module with gating.
+- Changes to capability or profile maps.
+- Bugs where UI and backend disagree on access.
+
+## Internal steps
+
+1. Review feature map in backend and clients.
+2. Validate guards per endpoint.
+3. Validate menus, primary routes, and deep links.
+4. Validate fallback when context is missing.
+5. Validate blocked messaging matches glossary and product rules.
+
+## Deliverables
+
+- Matrix: `profile or tier × feature × endpoint × screen`.
+- Inconsistencies and fixes.
+- Checklist for onboarding a new profile (when applicable).
+
+## Constraints
+
+- Backend is source of truth.
+- Hiding a button is not a security model.
+- Avoid duplicating gating rules without ownership.
+
+
+===== C:\ed\templates\ai\skills\dashboard-composition-by-profile.skill.md =====
+---
+name: dashboard-composition-by-profile
+purpose: Compose primary dashboards from a shared shell plus registry and reusable widgets—per operational profile when needed.
+---
+
+# Skill: Dashboard composition by profile
+
+## Required references
+
+1. `instructions/instructions.md`
+2. `instructions/product-rules.md`
+3. `instructions/backend-rules.md`
+4. `instructions/app-rules.md`
+5. Filled `project-context.template.md` and `feature-map.template.md`
+
+## Why it exists
+
+When the product serves different dominant operations per profile, the main dashboard should differ **without** duplicating entire apps or scattering conditionals.
+
+## What it solves
+
+- Pattern: **common shell + profile registry + modular widgets**.
+- Separation between **primary operational** dashboard and **reusable deep** analytics or detail blocks.
+- Backend contracts as composable blocks the client can arrange safely.
+
+## When to use
+
+- New or refactored primary dashboard.
+- New operational profile.
+- Reordering widgets or primary CTAs by context.
+
+## Internal steps
+
+1. Define the dominant operational question per profile (when profiles exist).
+2. Define primary CTA per profile.
+3. Define or adjust registry/config per profile.
+4. Compose widgets from typed block contracts.
+5. Keep deep analytics decoupled from the home surface where possible.
+6. Safe fallback for incomplete profile configuration.
+
+## Deliverables
+
+- Table per profile: intent, CTA, widget order, deep-link routes.
+- List of backend block contracts.
+- Backend–client consistency checklist for the dashboard.
+
+## Constraints
+
+- Do not bury domain rules in the shared shell.
+- Do not force a single hyper-generic dashboard when profiles genuinely differ.
+- Do not break existing deep routes without migration notes.
+
+
+===== C:\ed\templates\ai\skills\domain-decoupling-pass.skill.md =====
+---
+name: domain-decoupling-pass
+purpose: Detectar y desacoplar naming, tipos y reglas demasiado amarradas al dominio original.
+---
+
+# Skill: Domain Decoupling Pass
+
+## Por que existe
+Un starter reusable falla cuando conserva nombres, estructuras y supuestos de un negocio especifico en capas supuestamente compartidas.
+
+## Que resuelve
+- Localiza acoplamiento de dominio en UI/hooks/services/stores/DTOs.
+- Propone neutralizacion por renombre, adapters o aislamiento en `domain`.
+- Evita que core reusable dependa de vocabulario de negocio original.
+
+## Cuando usarlo
+- Antes de publicar un template como base clonable.
+- Cuando aparecen nombres de dominio en carpetas shared/base/core.
+- Cuando hay contratos con campos ambiguos o demasiado especificos.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. `template-web/src`, `template-app/src`, `template-backend/src`
+3. Tipos/DTOs compartidos y stores globales
+
+## Pasos
+1. Detectar terminos y estructuras acopladas al dominio origen.
+2. Clasificar: renombrar, encapsular, mover a `domain`, o retirar.
+3. Definir adapters transitorios si hay riesgo de ruptura.
+4. Verificar que contratos compartidos sigan claros y estables.
+
+## Entregables
+- Inventario de coupling de dominio.
+- Plan de desacople con impacto por capa.
+- Riesgos de migracion y mitigacion.
+
+## No debe hacer
+- No borrar contexto de negocio que deba quedar como `EXAMPLE_ONLY`.
+- No mezclar desacople con rediseno funcional grande.
+
+## Colabora con
+- `template-contract-boundary-guardian`
+- `template-system-architect`
+
+
+===== C:\ed\templates\ai\skills\domain-vertical-modeling.template.skill.md =====
+---
+name: domain-vertical-modeling-template
+purpose: Template for deep modeling of one vertical domain in an instantiated project (fill per product).
+---
+
+# Skill template: Domain vertical modeling
+
+> Use when a **specific industry or vertical** needs dedicated entities and workflows. This is **not** canonical starter content—copy and specialize per project.
+
+## When to use
+
+- A vertical module (e.g. industry-specific operations) is in scope.
+- You need explicit boundaries before cross-layer work.
+
+## Fill in
+
+- **Vertical name**:
+- **Primary user jobs-to-be-done**:
+- **Backend module paths**:
+- **Client module paths**:
+- **Integrations** (other contexts, payments, inventory, …):
+- **Invariants**:
+- **Anti-patterns** (what not to couple):
+
+## Collaboration
+
+- `agents/domain-workflow-architect.agent.md`
+- `agents/contract-integrator.agent.md`
+- `skills/business-workflow-design.skill.md`
+
+
+===== C:\ed\templates\ai\skills\finance-traceability-link.skill.md =====
+---
+name: finance-traceability-link
+purpose: Link operational facts to financial traceability when the product includes money movements.
+---
+
+# Skill: Finance traceability link
+
+## Why it exists
+
+When the product tracks money alongside operations, value comes from **linking** operational events to financial records—not duplicating ad hoc ledgers.
+
+## What it solves
+
+- Maps operational actions (orders, payments, adjustments, etc.) to financial movements.
+- Standardizes idempotent registration from a known source (`sourceType`, `sourceId`, metadata).
+- Keeps totals consistent (accrued, paid, pending, balance).
+
+## When to use
+
+- Any new action with monetary impact **in this product’s domain**.
+- Changes to partial payments, allocations, or summaries.
+- Building financial summaries for operational entities.
+
+## Expected inputs
+
+- Operational event with economic effect.
+- Source reference and metadata rules.
+- Amount, date, category, and actor rules.
+
+## Internal steps
+
+1. Define the financial fact (direction, category, amount).
+2. Define idempotency for the origin (avoid duplicates on retry).
+3. Register automatic ledger/transaction rows with useful metadata.
+4. Update entity financial summaries as required by the domain.
+5. Record history or audit entries explaining the movement.
+6. Validate partials and limits (no over-payment unless allowed).
+
+## Deliverables
+
+- Specification for operational ↔ financial linkage.
+- Implementation of registration and events.
+- Integrity checks.
+
+## Rules
+
+- Do not create a second competing ledger model without explicit architecture approval.
+- Do not record money without a referencable source.
+- Do not mix process state with payment state without clear naming.
+
+## Common mistakes
+
+- Double registration on retries.
+- Inconsistent totals from rounding.
+- Losing actor or document traceability.
+
+
+===== C:\ed\templates\ai\skills\implementation-release-audit.skill.md =====
+---
+name: implementation-release-audit
+purpose: Audit implementations before closure to ensure operational coherence across layers.
+---
+
+# Skill: Implementation release audit
+
+## Why it exists
+
+A successful build does not imply release readiness. Changes can compile yet fail from contract drift, incomplete gating, missing help content, or cosmetic-only “ready” states.
+
+## What it solves
+
+- Closes the loop across product intent, backend, clients, and guidance.
+- Surfaces partially applied contracts.
+- Finds orphan routes or UIs without backend support.
+- Checks help keys and actionable content when the product uses help.
+- Verifies gating is enforced on the backend, not only hidden in UI.
+- Validates ownership (tenant/account/domain scope).
+
+## When to use
+
+- End of any significant cross-layer change.
+- Before calling a new operational module “done.”
+- Before merge or release of capability- or state-sensitive work.
+
+## Expected inputs
+
+- Implemented requirement.
+- Changed backend and client files.
+- Affected consumers list.
+- Executable validation commands.
+
+## Internal steps
+
+1. Review `agent-workflow.md` and relevant `instructions/*.md`.
+2. Verify entrypoint and real navigation.
+3. Verify backend–client contract across DTO/controller/service/schema vs types/hooks/UI.
+4. Verify persistence ownership and scoping.
+5. Verify operational states (pending/blocked/ready/error/success).
+6. Verify help trigger, key, and content (if applicable).
+7. Verify backend enforcement for critical blocks.
+8. Verify impacted consumers; no silent drift.
+9. Run and report technical validation.
+10. Issue final verdict.
+
+## Deliverables
+
+- Verdict: `PASS` / `PASS WITH RISKS` / `FAIL`.
+- Severity-ranked findings.
+- Validation matrix.
+- Residual risks and corrective actions.
+
+## Relationship to other skills
+
+- Does not replace `backend-app-contract-sync.skill.md`; uses it for contract detail.
+- Does not replace `business-workflow-design.skill.md`; validates that states and rules were applied.
+- Does not replace `capability-profile-feature-gating.skill.md`; validates real gating behavior.
+- Does not replace `operational-ui-flow-builder.skill.md`; validates operational UX closure.
+
+## Common mistakes
+
+- PASS based only on compilation.
+- Skipping real screen/hook consumers.
+- Accepting frontend-only blocks without backend enforcement.
+- Accepting help keys without actionable content.
+- Accepting “ready” UI that does not change real behavior.
+
+
+===== C:\ed\templates\ai\skills\operational-state-traceability.skill.md =====
+---
+name: operational-state-traceability
+purpose: Model traceable states and events in operational flows.
+---
+
+# Skill: Operational state traceability
+
+## Why it exists
+
+Operational modules often depend on **states** and **reconstructable history** for daily use and audits.
+
+## What it solves
+
+- Practical state machines without over-engineering.
+- Business events explainable in timelines or history logs.
+- Transition rules and role-based blocks.
+
+## When to use
+
+- New states or flow changes.
+- Timelines or operational history UX.
+- Fixes when live state disagrees with recorded events.
+
+## Expected inputs
+
+- Target entity in **your** domain map.
+- Current and desired states.
+- Role and capability rules.
+
+## Internal steps
+
+1. Enumerate valid states.
+2. Declare allowed and forbidden transitions.
+3. Require an event for each important transition.
+4. Define minimum event metadata (actor, time, relevant amounts).
+5. Keep backend as source of truth for transitions.
+6. Expose fields for timeline UX without ambiguous client-only inference.
+
+## Deliverables
+
+- Table `current_state → action → next_state`.
+- Catalog of operational events.
+- Mandatory backend validations.
+
+## Rules
+
+- Avoid silent retroactive changes without an explicit event or policy.
+- Do not mutate critical state from clients without backend validation.
+- Keep event copy understandable to operational users.
+
+## Common mistakes
+
+- Uncontrolled rollbacks.
+- Missing actor or timestamp.
+- Timelines full of technical noise without business meaning.
+
+
+===== C:\ed\templates\ai\skills\operational-ui-flow-builder.skill.md =====
+---
+name: operational-ui-flow-builder
+purpose: Build forms and operational flows consistent with the product’s UX language and existing components.
+---
+
+# Skill: Operational UI flow builder
+
+## Why it exists
+
+Daily work happens in screens, modals, selectors, timelines, and quick actions. Inconsistency here drives adoption risk and errors.
+
+## What it solves
+
+- Registration/edit/payment-style flows using proven patterns in **the current** codebase.
+- Reuse of shared layout, loaders, attachments, and selectors.
+- Clear feedback: loading, success, error, retry.
+
+## When to use
+
+- New operational screens.
+- New mutation modals or sheets.
+- UX adjustments without breaking the shared design language.
+
+## Expected inputs
+
+- Primary screen intention.
+- Form fields and validations.
+- Backend actions and response states.
+
+## Internal steps
+
+1. Define the dominant intention of the screen.
+2. Order hierarchy: context → primary action → detail.
+3. Reuse components and patterns from reference modules in the repo.
+4. Implement minimum validation for money, quantity, dates when applicable.
+5. Immediate feedback and double-submit protection.
+6. Integrate uploads when the flow needs evidence files.
+7. Check empty/error/offline for critical actions.
+
+## Deliverables
+
+- Working screen or modal aligned with the design system.
+- Complete UX states (loading/success/error/empty).
+- Copy and action consistency notes.
+
+## Rules
+
+- Do not introduce a parallel mini design system.
+- Avoid dense forms without hierarchy.
+- Keep copy short, operational, and non-technical for end users.
+
+## Common mistakes
+
+- Multiple competing primary CTAs.
+- Money/quantity inputs without consistent parsing.
+- No visible confirmation after mutations.
+
+
+===== C:\ed\templates\ai\skills\public-component-showcase-design.skill.md =====
+---
+name: public-component-showcase-design
+purpose: Definir una ruta publica de showcase para componentes reusables sin convertirla en mini-app de negocio.
+---
+
+# Skill: Public Component Showcase Design
+
+## Por que existe
+`template-web` no tiene hoy una vitrina publica canónica de componentes, lo que dificulta validar reusabilidad y onboarding de nuevos equipos.
+
+## Que resuelve
+- Diseña arquitectura de showcase publica y segura.
+- Define taxonomia de componentes a exhibir.
+- Establece metadatos/estados minimos por componente mostrado.
+
+## Cuando usarlo
+- Creacion o refactor de ruta publica de componentes en `template-web`.
+- Preparacion de catalogo operativo para template hardening.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md` (showcase policy)
+2. `template-web/src/app/(public)`
+3. `template-web/src/components` y componentes reusable candidatos
+
+## Pasos
+1. Definir ruta publica y navegacion del showcase.
+2. Agrupar por categoria: primitives, composed, feedback, layout.
+3. Especificar ficha por componente (intent, variants, states, constraints).
+4. Garantizar datos demo/local sin dependencia de negocio protegido.
+5. Definir limites: que NO se expone.
+
+## Entregables
+- Blueprint de ruta publica de showcase.
+- Estructura de categorias y metadata.
+- Checklist de seguridad y aislamiento.
+
+## No debe hacer
+- No reutilizar datos reales de negocio.
+- No incluir pantallas de dominio como piezas base.
+
+## Colabora con
+- `template-web-component-governor`
+- `template-release-auditor`
+
+
+===== C:\ed\templates\ai\skills\reusable-component-extraction.skill.md =====
+---
+name: reusable-component-extraction
+purpose: Extraer y consolidar componentes/herramientas repetidas en capas base reusables.
+---
+
+# Skill: Reusable Component Extraction
+
+## Por que existe
+Hay duplicacion de patrones UI y wrappers delgados que inflan complejidad sin aportar valor de dominio.
+
+## Que resuelve
+- Detecta componentes repetidos para mover a base/shared/composed.
+- Elimina aliases/wrappers sin comportamiento.
+- Define contrato minimo reusable para cada extraccion.
+
+## Cuando usarlo
+- Refactors en `template-web/src/components|modules`.
+- Refactors en `template-app/src/components|modules`.
+- Cuando se detectan variantes clonadas por pantalla/modulo.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. Arbol de componentes actuales.
+3. Uso real por pantallas y modulos.
+
+## Pasos
+1. Agrupar duplicados por patron (layout, modal, header, input, table/list cards).
+2. Separar API reusable de props de dominio.
+3. Definir destino: `base` o `composed`.
+4. Reemplazar consumidores y retirar wrappers obsoletos.
+5. Verificar que no se rompa estado/loading/error en consumidores.
+
+## Entregables
+- Lista de extracciones realizadas o planificadas.
+- Contrato de cada componente base/composed.
+- Lista de wrappers eliminables.
+
+## No debe hacer
+- No mezclar logica de negocio en primitives.
+- No mover componentes sin consumidores identificados.
+
+## Colabora con
+- `template-web-component-governor`
+- `template-system-architect`
+
+
+===== C:\ed\templates\ai\skills\template-folder-boundary-design.skill.md =====
+---
+name: template-folder-boundary-design
+purpose: Disenar fronteras de carpetas claras para evitar mezcla de responsabilidades en templates.
+---
+
+# Skill: Template Folder Boundary Design
+
+## Por que existe
+Las fronteras de carpetas actuales mezclan en algunos puntos componentes, modulo de dominio, hooks y wrappers redundantes.
+
+## Que resuelve
+- Define ownership claro por carpeta.
+- Reduce mezcla entre core reusable y dominio.
+- Establece ubicacion oficial para ejemplos/showcase y cuarentena.
+
+## Cuando usarlo
+- Refactors estructurales en web/app/backend.
+- Cuando hay dudas de donde vive cada pieza reusable.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md` (boundary model)
+2. Arbol real de carpetas en los tres templates.
+3. Entrypoints y consumidores principales.
+
+## Pasos
+1. Mapear estructura actual por capa.
+2. Asignar ownership por bloque (`core/shared/base`, `domain`, `examples/showcase`, `legacy/quarantine`).
+3. Definir movimientos necesarios minimizando churn.
+4. Validar imports y dependencias cruzadas.
+
+## Entregables
+- Mapa de fronteras de carpetas objetivo por proyecto.
+- Lista de movimientos recomendados.
+- Reglas de ubicacion para nuevas piezas.
+
+## No debe hacer
+- No crear carpetas vacias para "orden visual".
+- No romper rutas publicas/protegidas sin plan de migracion.
+
+## Colabora con
+- `template-system-architect`
+- `template-contract-boundary-guardian`
+
+
+===== C:\ed\templates\ai\skills\template-optimization-pass.skill.md =====
+---
+name: template-optimization-pass
+purpose: Eliminar ruido estructural que empeora mantenibilidad del template.
+---
+
+# Skill: Template Optimization Pass
+
+## Por que existe
+Los templates contienen ruido tipico de evolucion de producto (wrappers vacios, aliases de ruta, imports ruidosos, hooks espejo) que dificulta clonacion limpia.
+
+## Que resuelve
+- Detecta y prioriza optimizaciones de bajo riesgo y alto impacto.
+- Limpia wrappers/aliases innecesarios.
+- Reduce superficie de mantenimiento sin cambiar reglas de negocio.
+
+## Cuando usarlo
+- Despues de auditoria de readiness.
+- Antes de release audit de template.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. Listado de wrappers y aliases detectados.
+3. Duplicaciones en hooks/services/components.
+
+## Pasos
+1. Detectar elementos sin valor arquitectonico.
+2. Marcar riesgo de eliminacion (bajo/medio/alto).
+3. Ejecutar limpieza incremental empezando por bajo riesgo.
+4. Verificar imports, rutas y consumidores.
+
+## Entregables
+- Lista de optimizaciones aplicadas/propuestas.
+- Impacto esperado en mantenibilidad.
+- Riesgos residuales.
+
+## No debe hacer
+- No optimizar por estilo personal.
+- No mezclar esta pasada con features nuevas.
+
+## Colabora con
+- `template-web-component-governor`
+- `template-release-auditor`
+
+
+===== C:\ed\templates\ai\skills\template-readiness-audit.skill.md =====
+---
+name: template-readiness-audit
+purpose: Auditar si un proyecto esta realmente listo para operar como template de salida.
+---
+
+# Skill: Template Readiness Audit
+
+## Por que existe
+Sin una clasificacion formal, los equipos confunden codigo util con deuda heredada y publican starters frágiles.
+
+## Que resuelve
+- Clasifica piezas en `REUSABLE/ADAPT/EXAMPLE_ONLY/REMOVE/QUARANTINE`.
+- Identifica coupling, duplicacion y fronteras rotas.
+- Entrega baseline de reusabilidad por proyecto.
+
+## Cuando usarlo
+- Inicio de fase de template hardening.
+- Antes de plan de extraccion/componentizacion.
+- Cierre de fase para medir avance real.
+
+## Que revisa primero
+1. `instructions/template-governance-rules.md`
+2. Estructura de `template-web/src`, `template-app/src`, `template-backend/src`
+3. Wrappers/rutas alias/hooks delgados/contratos duplicados
+
+## Pasos
+1. Inventariar modulos por capa (ui/hooks/services/stores/contracts/backend).
+2. Clasificar cada bloque en una sola clase canónica.
+3. Marcar acoplamientos especificos de dominio.
+4. Identificar quick wins de hardening (alto impacto, bajo riesgo).
+5. Proponer secuencia incremental de ejecucion.
+
+## Entregables
+- Matriz de readiness por proyecto y por modulo.
+- Lista priorizada de acciones (`ADAPT/REMOVE/QUARANTINE`).
+- Riesgos de clonacion actuales.
+
+## No debe hacer
+- No implementar features nuevas.
+- No mover codigo sin clasificacion previa.
+
+## Colabora con
+- `template-system-architect`
+- `template-release-auditor`
+
+
+===== C:\ed\templates\ai\START_NEW_PROJECT.md =====
+# Start a new product from this monorepo
+
+Use this after cloning `template-web`, `template-app`, and/or `template-backend`. It ties together `agent-workflow.md` Phase 1–2 and the instantiation templates.
+
+## Phase 1 — Instantiate (before feature work)
+
+1. **Clone** the starters you need into a new repo or workspace.
+2. **Read** `ai/instructions/instructions.md` and `ai/agent-workflow.md` (sections “Phase 1” and “Phase 2”).
+3. **Copy and fill** (drop `.template` from the filename, e.g. `project-context.md`):
+   - `ai/instructions/project-context.template.md` — identity, surfaces, auth, tenancy, capabilities, what is core vs example.
+   - `ai/instructions/domain-map.template.md` — entities, language, boundaries.
+   - `ai/instructions/feature-map.template.md` — routes, API map, gating.
+   - `ai/instructions/glossary.template.md` — terms and forbidden legacy names.
+4. **Wire environment**
+   - Web: `NEXT_PUBLIC_API_BASE` → your API root (default in repo targets `http://localhost:7000/api`).
+   - App: `template-app/src/config/apiBaseUrl.ts` dev/prod URLs.
+5. **Prune** example/legacy trees you will not ship (see `template-app/src/README.md` for modules not on the starter navigator).
+6. **Align native IDs** when you are ready: Android `applicationId`, iOS bundle id, Firebase files — not required to read the canon, but required before store release.
+
+## Phase 2 — Build
+
+1. Treat the filled `project-context` + `feature-map` as the definition of **the product**.
+2. Follow `ai/agent-workflow.md` for every task (layers, contracts, audit gate).
+3. Use agents/skills under `ai/agents/*.agent.md` and `ai/skills/*.skill.md` as needed.
+4. Keep **workspace** naming for tenant scope in clients unless your glossary says otherwise; legacy app code may still say `business` inside quarantined modules.
+
+## Workspace pattern (explicit)
+
+In **template-web** and the **app shell**, “workspace” means a **scoped context** under an account (aligned with `template-backend` `workspaces` on `/auth/me`). It is not tied to a former product name. Legacy modules under `template-app/src/modules/*` may still use older DTO shapes until you delete them.
+
+

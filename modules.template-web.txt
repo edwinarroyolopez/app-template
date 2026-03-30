@@ -1,0 +1,5530 @@
+===== C:\ed\templates\template-web\src\app\(protected)\dashboard\page.tsx =====
+'use client';
+
+import { useRouter } from 'next/navigation';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { useAuthStore } from '@/stores/auth.store';
+import { useWorkspaceStore } from '@/stores/workspace.store';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { ArrowRight, Layers } from 'lucide-react';
+
+const Page = styled.div`
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+  color: ${theme.colors.text};
+`;
+
+const Kicker = styled.p`
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: ${theme.colors.muted};
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+`;
+
+const Lead = styled.p`
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: ${theme.colors.muted};
+  max-width: 52ch;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  gap: 14px;
+  @media (min-width: 560px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const Meta = styled.dl`
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+`;
+
+const Dt = styled.dt`
+  margin: 0;
+  color: ${theme.colors.muted};
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+`;
+
+const Dd = styled.dd`
+  margin: 0;
+  font-weight: 600;
+`;
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const workspaces = useAuthStore((s) => s.workspaces);
+  const usage = useAuthStore((s) => s.usage);
+  const active = useWorkspaceStore((s) => s.activeWorkspace);
+
+  return (
+    <Page>
+      <div>
+        <Kicker>Área protegida</Kicker>
+        <Title>Hola, {user?.name?.split(' ')[0] ?? 'equipo'}</Title>
+        <Lead>
+          Este panel es el ejemplo de shell autenticado: navegación lateral, workspace en la barra superior y tres rutas de
+          referencia para clonar el starter sin arrastre de dominio.
+        </Lead>
+      </div>
+
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: `${theme.colors.primary}18`,
+              color: theme.colors.primary,
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <Layers size={20} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Contexto activo</div>
+            <Meta>
+              <Dt>Workspace</Dt>
+              <Dd>{active?.name ?? '—'}</Dd>
+              <Dt>Workspaces en cuenta</Dt>
+              <Dd>{workspaces.length}</Dd>
+              {usage ? (
+                <>
+                  <Dt>Uso (API)</Dt>
+                  <Dd>
+                    {usage.workspaces.used}/{usage.workspaces.max} workspaces · {usage.members.used}/{usage.members.max}{' '}
+                    members
+                  </Dd>
+                </>
+              ) : null}
+            </Meta>
+          </div>
+        </div>
+      </Card>
+
+      <Grid>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>Datos y formularios</div>
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: theme.colors.muted, lineHeight: 1.5 }}>
+            Estado local, validación mínima y patrón de lectura con React Query (mock).
+          </p>
+          <Button type="button" onClick={() => router.push('/workspace')}>
+            Abrir <ArrowRight size={14} style={{ marginLeft: 6 }} />
+          </Button>
+        </Card>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>Accesos y estados</div>
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: theme.colors.muted, lineHeight: 1.5 }}>
+            Capabilities del store, UI bloqueada y tienda de shell (`useUiStore`).
+          </p>
+          <Button type="button" $variant="ghost" onClick={() => router.push('/patterns')}>
+            Ver patrones <ArrowRight size={14} style={{ marginLeft: 6 }} />
+          </Button>
+        </Card>
+      </Grid>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(protected)\layout.tsx =====
+// src/app/(protected)/layout.tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth.store';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { Menu as MenuIcon, LayoutDashboard, PenLine, SlidersHorizontal } from 'lucide-react';
+import SideNav from '@/components/SideNav';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import { useWorkspaceStore } from '@/stores/workspace.store';
+import { useMe } from '@/modules/auth/hooks/useMe';
+
+const Shell = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background: ${theme.colors.bg};
+  --sidebar-w: 240px;
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+`;
+
+const TopBar = styled.header`
+  height: 56px;
+  background: ${theme.colors.panel};
+  border-bottom: 1px solid ${theme.colors.border};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+`;
+
+const MenuButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid ${theme.colors.border};
+  color: ${theme.colors.text};
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  @media (min-width: 1024px) {
+    display: none;
+  }
+`;
+
+const Brand = styled.div`
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  color: ${theme.colors.text};
+`;
+
+const Main = styled.main`
+  flex: 1;
+  padding: 16px;
+  @media (min-width: 768px) {
+    padding: 24px;
+  }
+`;
+
+const Backdrop = styled.button`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 55;
+  backdrop-filter: blur(2px);
+  border: none;
+`;
+
+const STARTER_ROUTES = [
+  {
+    href: '/dashboard',
+    label: 'Resumen',
+    icon: LayoutDashboard,
+    section: 'account' as const,
+    highlight: true,
+  },
+  {
+    href: '/workspace',
+    label: 'Datos y formularios',
+    icon: PenLine,
+    section: 'navigation' as const,
+  },
+  {
+    href: '/patterns',
+    label: 'Accesos y estados',
+    icon: SlidersHorizontal,
+    section: 'navigation' as const,
+  },
+] as const;
+
+export default function ProtectedLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const activeWorkspace = useWorkspaceStore((s) => s.activeWorkspace);
+  const { token, user, capabilities, logout, isHydrated } = useAuthStore();
+  useMe();
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!token) {
+      router.replace('/login');
+    }
+  }, [isHydrated, token, router]);
+
+  const handleLogout = () => {
+    logout();
+    useWorkspaceStore.getState().setActiveWorkspace(null);
+    router.replace('/login');
+  };
+
+  const isPremiumTier = capabilities ? !capabilities.hasTierLimits : true;
+
+  const routes = STARTER_ROUTES.map((route) => ({
+    href: route.href,
+    label: route.label,
+    icon: route.icon,
+    section: route.section,
+    highlight: 'highlight' in route ? Boolean(route.highlight) : false,
+    locked: route.href === '/workspace' && !isPremiumTier,
+    badge: route.href === '/workspace' && !isPremiumTier ? 'PLUS' : undefined,
+  }));
+
+  if (!isHydrated) return null;
+  if (!token) return null;
+
+  const sideNavActiveContext =
+    activeWorkspace != null
+      ? {
+          href: '/dashboard',
+          title: 'Workspace activo',
+          name: activeWorkspace.name,
+          icon: LayoutDashboard,
+        }
+      : null;
+
+  return (
+    <Shell>
+      <SideNav
+        open={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        pathname={pathname}
+        routes={routes}
+        user={{ name: user?.name, role: user?.role }}
+        onSignOut={handleLogout}
+        activeContext={sideNavActiveContext}
+        footerNote="template-web starter"
+      />
+
+      <ContentWrapper>
+        <TopBar>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <MenuButton onClick={() => setIsSidebarOpen(true)} type="button" aria-label="Abrir menú">
+              <MenuIcon size={20} />
+            </MenuButton>
+            <Brand>Starter shell</Brand>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <WorkspaceSwitcher />
+            <div
+              style={{
+                fontSize: '11px',
+                color: theme.colors.muted,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {user?.role ?? '—'}
+            </div>
+          </div>
+        </TopBar>
+
+        <Main>{children}</Main>
+      </ContentWrapper>
+
+      {isSidebarOpen && (
+        <Backdrop type="button" onClick={() => setIsSidebarOpen(false)} aria-label="Cerrar menú" />
+      )}
+    </Shell>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(protected)\page.tsx =====
+// src/app/(protected)/page.tsx
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function ProtectedIndexPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, [router]);
+
+  return null;
+}
+
+
+===== C:\ed\templates\template-web\src\app\(protected)\patterns\page.tsx =====
+'use client';
+
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { useAuthStore } from '@/stores/auth.store';
+import { useUiStore } from '@/stores/ui.store';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+
+const Page = styled.div`
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+  color: ${theme.colors.text};
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const Muted = styled.p`
+  margin: 0;
+  font-size: 14px;
+  color: ${theme.colors.muted};
+  line-height: 1.55;
+`;
+
+const Row = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid ${theme.colors.border};
+  font-size: 13px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const Flag = styled.span<{ $on: boolean }>`
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid ${({ $on }) => ($on ? theme.colors.primary : theme.colors.border)};
+  color: ${({ $on }) => ($on ? theme.colors.primary : theme.colors.muted)};
+`;
+
+export default function PatternsPage() {
+  const capabilities = useAuthStore((s) => s.capabilities);
+  const permissions = useAuthStore((s) => s.accountPermissions);
+  const { isMenuOpen, toggleMenu } = useUiStore();
+
+  const cap = capabilities ?? {
+    canCreateMultipleWorkspaces: { enabled: true },
+    canInviteMembers: { enabled: true },
+    canUseApi: { enabled: true },
+    hasTierLimits: false,
+  };
+
+  return (
+    <Page>
+      <div>
+        <Title>Accesos y estados</Title>
+        <Muted style={{ marginTop: 10 }}>
+          Superficie para enseñar gating: flags genéricos del store de auth, permisos normalizados y un toggle de UI global sin
+          persistir negocio.
+        </Muted>
+      </div>
+
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 14 }}>Capabilities (starter)</div>
+        <Muted style={{ marginBottom: 12, fontSize: 12 }}>
+          Mapeadas desde <code>/auth/me</code> con nombres neutrales. <code>hasTierLimits</code> controla el candado en{' '}
+          <code>/workspace</code>.
+        </Muted>
+        <Row>
+          <span>canCreateMultipleWorkspaces</span>
+          <Flag $on={cap.canCreateMultipleWorkspaces.enabled}>
+            {cap.canCreateMultipleWorkspaces.enabled ? 'on' : 'off'}
+          </Flag>
+        </Row>
+        <Row>
+          <span>canInviteMembers</span>
+          <Flag $on={cap.canInviteMembers.enabled}>{cap.canInviteMembers.enabled ? 'on' : 'off'}</Flag>
+        </Row>
+        <Row>
+          <span>canUseApi</span>
+          <Flag $on={cap.canUseApi.enabled}>{cap.canUseApi.enabled ? 'on' : 'off'}</Flag>
+        </Row>
+        <Row>
+          <span>hasTierLimits</span>
+          <Flag $on={cap.hasTierLimits}>{cap.hasTierLimits ? 'limited' : 'full'}</Flag>
+        </Row>
+      </Card>
+
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 14 }}>Permisos de cuenta</div>
+        <Muted style={{ marginBottom: 12, fontSize: 12 }}>
+          {permissions.length ? permissions.join(', ') : 'Ninguno en sesión (o aún no hidratado).'}
+        </Muted>
+      </Card>
+
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>useUiStore</div>
+        <Muted style={{ marginBottom: 12, fontSize: 13 }}>
+          Estado de UI compartido (aquí: menú). No dupliques en Zustand lo que React Query ya resuelve para datos remotos.
+        </Muted>
+        <Button type="button" $variant="ghost" onClick={() => toggleMenu()}>
+          Alternar isMenuOpen ({isMenuOpen ? 'true' : 'false'})
+        </Button>
+      </Card>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(protected)\workspace\page.tsx =====
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { useAuthStore } from '@/stores/auth.store';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { RefreshHeader } from '@/components/RefreshHeader';
+import { Lock } from 'lucide-react';
+
+const Page = styled.div`
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+  color: ${theme.colors.text};
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const Muted = styled.p`
+  margin: 0;
+  font-size: 14px;
+  color: ${theme.colors.muted};
+  line-height: 1.55;
+`;
+
+const List = styled.ul`
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 13px;
+  color: ${theme.colors.muted};
+  line-height: 1.5;
+`;
+
+async function fetchDemoRows(): Promise<{ id: string; title: string }[]> {
+  await new Promise((r) => setTimeout(r, 450));
+  return [
+    { id: 'a', title: 'Registro de ejemplo A' },
+    { id: 'b', title: 'Registro de ejemplo B' },
+  ];
+}
+
+export default function WorkspaceDemoPage() {
+  const [title, setTitle] = useState('');
+  const [saved, setSaved] = useState<string | null>(null);
+  const capabilities = useAuthStore((s) => s.capabilities);
+  const locked = capabilities?.hasTierLimits === true;
+
+  const { data, isFetching, refetch, isError } = useQuery({
+    queryKey: ['starter-workspace-demo'],
+    queryFn: fetchDemoRows,
+  });
+
+  if (locked) {
+    return (
+      <Page>
+        <Card>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <Lock size={22} color={theme.colors.muted} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <Title style={{ fontSize: '1.1rem', marginBottom: 8 }}>Ruta con tier limitado</Title>
+              <Muted>
+                En este starter, <code>/workspace</code> aparece bloqueada en la navegación cuando{' '}
+                <code>capabilities.hasTierLimits</code> es verdadero (mapeado desde la API). Sustituye la regla por la de tu
+                producto.
+              </Muted>
+            </div>
+          </div>
+        </Card>
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      <div>
+        <Title>Datos y formularios</Title>
+        <Muted style={{ marginTop: 10 }}>
+          Estado local en React, envío simulado y lista cargada con React Query (sin API de negocio). Úsalo como plantilla para
+          pantallas CRUD.
+        </Muted>
+      </div>
+
+      <RefreshHeader
+        title="Lista demo"
+        subtitle="React Query · refetch manual"
+        isFetching={isFetching}
+        onRefresh={() => refetch()}
+      />
+
+      <Card>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSaved(title.trim() || '(vacío)');
+            setTitle('');
+          }}
+          style={{ display: 'grid', gap: 14 }}
+        >
+          <label style={{ fontSize: 12, fontWeight: 600, color: theme.colors.muted }}>Título</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Escribe y guarda (local)" />
+          <Button type="submit" disabled={isFetching}>
+            Guardar en estado local
+          </Button>
+          {saved !== null ? (
+            <Muted style={{ fontSize: 13 }}>
+              Último valor guardado: <strong style={{ color: theme.colors.text }}>{saved}</strong>
+            </Muted>
+          ) : null}
+        </form>
+      </Card>
+
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 14 }}>Filas mock</div>
+        {isError ? (
+          <Muted>No se pudo cargar el demo.</Muted>
+        ) : (
+          <List>
+            {(data ?? []).map((row) => (
+              <li key={row.id}>{row.title}</li>
+            ))}
+            {!data?.length && isFetching ? <li>Cargando…</li> : null}
+          </List>
+        )}
+      </Card>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(public)\data-deletion\page.tsx =====
+'use client';
+
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { Trash2, Mail } from 'lucide-react';
+
+const Wrap = styled.main`
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const Title = styled.h1`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${theme.colors.text};
+  letter-spacing: -0.02em;
+`;
+
+const Subtitle = styled.p`
+  font-size: 14px;
+  color: ${theme.colors.muted};
+  line-height: 1.55;
+`;
+
+const Card = styled.section`
+  background: ${theme.colors.panel};
+  border: 1px solid ${theme.colors.border};
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const Head = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: ${theme.colors.text};
+  }
+  svg {
+    color: ${theme.colors.primary};
+  }
+`;
+
+const P = styled.p`
+  font-size: 13px;
+  line-height: 1.6;
+  color: ${theme.colors.muted};
+  margin: 0;
+`;
+
+export default function DataDeletionPage() {
+  return (
+    <Wrap>
+      <div>
+        <Title>Eliminación de datos</Title>
+        <Subtitle>Texto placeholder del starter. Define tu proceso real de borrado y soporte.</Subtitle>
+      </div>
+
+      <Card>
+        <Head>
+          <Trash2 size={18} />
+          <h2>Solicitudes</h2>
+        </Head>
+        <P>
+          Explica cómo un usuario puede pedir borrar su cuenta o exportar datos, plazos y excepciones legales.
+        </P>
+      </Card>
+
+      <Card>
+        <Head>
+          <Mail size={18} />
+          <h2>Contacto</h2>
+        </Head>
+        <P>Incluye un canal verificable (correo o ticket) para solicitudes.</P>
+      </Card>
+    </Wrap>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(public)\layout.tsx =====
+// src/app/(public)/layout.tsx
+'use client';
+import '../globals.css';
+import { ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth.store';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+
+/* ===== Shell centrado total ===== */
+
+const Shell = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center; /* centro real X/Y */
+  padding: 20px;
+  color: ${theme.colors.text};
+`;
+
+/* ===== Card ===== */
+
+const Card = styled.div`
+  width: 100%;
+  max-width: 450px;
+  border-radius: 16px;
+  border: 1px solid ${theme.colors.border};
+  padding: 28px 22px;
+  background: ${theme.colors.panel || '#020617'};
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+/* ===== Header ===== */
+
+const Title = styled.h1`
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+`;
+
+const Subtitle = styled.p`
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: ${theme.colors.muted};
+`;
+
+/* ===== Children wrapper ===== */
+
+const Body = styled.div`
+  width: 100%;
+`;
+
+type Props = {
+  children: ReactNode;
+};
+
+export default function PublicLayout({ children }: Props) {
+  const router = useRouter();
+  const { token } = useAuthStore();
+
+  useEffect(() => {
+    if (token) {
+      router.replace('/dashboard');
+    }
+  }, [token, router]);
+
+  return (
+    <Shell>
+      <Card>
+        <Body>
+          {children}
+        </Body>
+      </Card>
+    </Shell>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\(public)\login\page.tsx =====
+// src/app/(public)/login/page.tsx
+import LoginForm from '@/modules/auth/components/LoginForm';
+
+export default function LoginPage() {
+    return <LoginForm />;
+}
+
+
+===== C:\ed\templates\template-web\src\app\(public)\privacy\page.tsx =====
+'use client';
+
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { Shield, Mail } from 'lucide-react';
+
+const Wrap = styled.main`
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const Title = styled.h1`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${theme.colors.text};
+  letter-spacing: -0.02em;
+`;
+
+const Subtitle = styled.p`
+  font-size: 14px;
+  color: ${theme.colors.muted};
+  line-height: 1.55;
+`;
+
+const Card = styled.section`
+  background: ${theme.colors.panel};
+  border: 1px solid ${theme.colors.border};
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const Head = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: ${theme.colors.text};
+  }
+  svg {
+    color: ${theme.colors.primary};
+  }
+`;
+
+const P = styled.p`
+  font-size: 13px;
+  line-height: 1.6;
+  color: ${theme.colors.muted};
+  margin: 0;
+`;
+
+export default function PrivacyPage() {
+  return (
+    <Wrap>
+      <div>
+        <Title>Privacidad</Title>
+        <Subtitle>Plantilla genérica para el starter. Sustituye por la política legal de tu producto.</Subtitle>
+      </div>
+
+      <Card>
+        <Head>
+          <Shield size={18} />
+          <h2>Datos</h2>
+        </Head>
+        <P>
+          Describe qué datos recopilas, base legal, conservación y transferencias. Este archivo no sustituye asesoría legal.
+        </P>
+      </Card>
+
+      <Card>
+        <Head>
+          <Mail size={18} />
+          <h2>Contacto</h2>
+        </Head>
+        <P>Añade un correo o formulario DPO cuando definas tu operador.</P>
+      </Card>
+    </Wrap>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\architecture\ArchitectureDoc.tsx =====
+'use client';
+
+import Link from 'next/link';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+
+const Page = styled.div`
+  min-height: 100vh;
+  background: ${theme.colors.bg};
+  color: ${theme.colors.text};
+  padding: 40px 24px 80px;
+`;
+
+const Inner = styled.article`
+  max-width: 680px;
+  margin: 0 auto;
+`;
+
+const Back = styled(Link)`
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${theme.colors.primary};
+  text-decoration: none;
+  margin-bottom: 28px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const H1 = styled.h1`
+  margin: 0 0 12px;
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+`;
+
+const Lead = styled.p`
+  margin: 0 0 36px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: ${theme.colors.muted};
+`;
+
+const H2 = styled.h2`
+  margin: 36px 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const P = styled.p`
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: ${theme.colors.muted};
+`;
+
+const Code = styled.code`
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: ${theme.colors.panel};
+  border: 1px solid ${theme.colors.border};
+  color: ${theme.colors.text};
+`;
+
+const Pre = styled.pre`
+  margin: 12px 0 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+`;
+
+const Ul = styled.ul`
+  margin: 0 0 16px;
+  padding-left: 1.2rem;
+  font-size: 14px;
+  line-height: 1.6;
+  color: ${theme.colors.muted};
+`;
+
+export default function ArchitectureDoc() {
+  return (
+    <Page>
+      <Inner>
+        <Back href="/">← Inicio</Back>
+        <H1>Arquitectura del starter</H1>
+        <Lead>
+          Referencia rápida para extender <Code>template-web</Code> sin mezclar dominio en la base reusable. Si algo contradice
+          tu producto, sustitúyelo en <Code>src/modules/&lt;dominio&gt;</Code>, no en primitives.
+        </Lead>
+
+        <H2>Estructura de carpetas</H2>
+        <Pre>{`src/app/           # Rutas App Router (públicas y (protected))
+src/components/ui/  # Primitives (Button, Input, Card, …)
+src/components/     # Piezas compuestas reusables (Modal, SideNav, …)
+src/modules/        # Dominio: hooks, API, UI específica (p. ej. auth)
+src/stores/         # Zustand: auth, UI de shell, workspace activo
+src/services/       # Cliente HTTP, queryClient`}</Pre>
+
+        <H2>
+          <Code>src/components</Code> vs <Code>src/modules</Code>
+        </H2>
+        <Ul>
+          <li>
+            <strong style={{ color: theme.colors.text }}>components</strong>: sin conocer tu negocio; aceptan props y callbacks.
+          </li>
+          <li>
+            <strong style={{ color: theme.colors.text }}>modules</strong>: conocen endpoints, DTOs y copy de un ámbito (auth,
+            facturación, etc.).
+          </li>
+        </Ul>
+
+        <H2>¿Primitive, composed o módulo?</H2>
+        <P>
+          <Code>ui/&lt;Nombre&gt;</Code> si es un control atómico. Carpeta en <Code>components/&lt;Nombre&gt;</Code> si reutilizas
+          el patrón en varias pantallas sin arrastrar DTOs. Si necesitas tipos del backend y hooks de datos, empieza en{' '}
+          <Code>modules/&lt;dominio&gt;/components</Code> y extrae cuando el contrato esté estable.
+        </P>
+
+        <H2>Zustand en este starter</H2>
+        <Ul>
+          <li>
+            <Code>auth.store</Code>: token, usuario, lista de workspaces (mapeada desde la API), capabilities genéricas, permisos y
+            uso (límites). Persistido en <Code>localStorage</Code>.
+          </li>
+          <li>
+            <Code>workspace.store</Code>: workspace activo elegido en el shell (persistido).
+          </li>
+          <li>
+            <Code>ui.store</Code>: estado de UI transversal pequeño (ej. menú); no datos remotos.
+          </li>
+        </Ul>
+
+        <H2>React Query: qué no va a Zustand</H2>
+        <P>
+          Listas, detalles, paginación, invalidación y estados de red pertenecen a React Query. Zustand debe guardar identidad de
+          sesión, preferencias de shell y flags que el backend ya envió, no copias cacheables de colecciones.
+        </P>
+
+        <H2>Rutas públicas y protegidas</H2>
+        <Ul>
+          <li>
+            Públicas: <Code>/</Code>, <Code>/system-design</Code>, <Code>/architecture</Code>, <Code>/login</Code> y legales bajo{' '}
+            <Code>(public)</Code>.
+          </li>
+          <li>
+            Protegidas: <Code>(protected)/layout.tsx</Code> redirige a <Code>/login</Code> sin token. Solo tres páginas de ejemplo:{' '}
+            <Code>/dashboard</Code>, <Code>/workspace</Code>, <Code>/patterns</Code>.
+          </li>
+        </Ul>
+
+        <H2>Nueva página</H2>
+        <P>
+          Añade <Code>page.tsx</Code> bajo <Code>app/(protected)/mi-ruta</Code> o en la raíz de <Code>app</Code> si es pública.
+          Registra el ítem en <Code>SideNav</Code> solo si pertenece al shell; las landings no usan SideNav.
+        </P>
+
+        <H2>Nuevo componente</H2>
+        <P>
+          1) ¿Es un control genérico? → <Code>components/ui</Code>. 2) ¿Es patrón de producto sin DTO? →{' '}
+          <Code>components/&lt;Nombre&gt;</Code>. 3) ¿Llamadas API y reglas de negocio? → módulo. Documenta la pieza en{' '}
+          <Code>/system-design</Code> cuando sea estable.
+        </P>
+
+        <H2>Qué es solo ejemplo</H2>
+        <P>
+          Las tres rutas protegidas y los candados de tier son didácticos. Sustituye copy, reglas y campos por tu dominio; mantén
+          la separación components / modules / stores.
+        </P>
+      </Inner>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\architecture\page.tsx =====
+import type { Metadata } from 'next';
+import ArchitectureDoc from './ArchitectureDoc';
+
+export const metadata: Metadata = {
+  title: 'Arquitectura | template-web',
+  description: 'Guía operativa del starter: carpetas, estado, rutas y composición.',
+  robots: { index: true, follow: true },
+};
+
+export default function ArchitecturePage() {
+  return <ArchitectureDoc />;
+}
+
+
+===== C:\ed\templates\template-web\src\app\HomePageClient.tsx =====
+'use client';
+
+import Link from 'next/link';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { ArrowRight, BookOpen, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+
+const Page = styled.div`
+  min-height: 100vh;
+  background: ${theme.colors.bg};
+  color: ${theme.colors.text};
+  display: flex;
+  flex-direction: column;
+`;
+
+const Main = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 24px 64px;
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+`;
+
+const Kicker = styled.p`
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: ${theme.colors.muted};
+`;
+
+const Title = styled.h1`
+  margin: 0 0 16px;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+`;
+
+const Lead = styled.p`
+  margin: 0 0 32px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: ${theme.colors.muted};
+  max-width: 48ch;
+`;
+
+const Actions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 40px;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+`;
+
+const PrimaryLink = styled(Link)`
+  text-decoration: none;
+  display: inline-flex;
+`;
+
+const GhostLink = styled(Link)`
+  text-decoration: none;
+  display: inline-flex;
+`;
+
+const Block = styled.div`
+  padding-top: 28px;
+  border-top: 1px solid ${theme.colors.border};
+`;
+
+const BlockTitle = styled.h2`
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${theme.colors.muted};
+`;
+
+const List = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+`;
+
+const Item = styled.li`
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+`;
+
+const IconBox = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: ${theme.colors.panel};
+  border: 1px solid ${theme.colors.border};
+  display: grid;
+  place-items: center;
+  color: ${theme.colors.primary};
+  flex-shrink: 0;
+`;
+
+const ItemBody = styled.div`
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${theme.colors.muted};
+
+  strong {
+    display: block;
+    color: ${theme.colors.text};
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+`;
+
+const Foot = styled.footer`
+  padding: 20px 24px;
+  border-top: 1px solid ${theme.colors.border};
+  text-align: center;
+  font-size: 12px;
+  color: ${theme.colors.muted};
+`;
+
+const FootLink = styled(Link)`
+  color: ${theme.colors.primary};
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 8px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export default function HomePageClient() {
+  return (
+    <Page>
+      <Main>
+        <Kicker>Next.js · App Router · Zustand · React Query</Kicker>
+        <Title>Starter deliberado para producto nuevo.</Title>
+        <Lead>
+          Sin ruido de dominio heredado: primitives y piezas compuestas documentadas, una guía de arquitectura operativa y tres
+          pantallas protegidas que enseñan shell, datos y gating.
+        </Lead>
+
+        <Actions>
+          <PrimaryLink href="/system-design">
+            <Button type="button">
+              Abrir system design
+              <ArrowRight size={16} style={{ marginLeft: 8 }} />
+            </Button>
+          </PrimaryLink>
+          <GhostLink href="/architecture">
+            <Button type="button" $variant="ghost">
+              Arquitectura del repo
+            </Button>
+          </GhostLink>
+        </Actions>
+
+        <Block>
+          <BlockTitle>Qué incluye</BlockTitle>
+          <List>
+            <Item>
+              <IconBox>
+                <Layers size={18} />
+              </IconBox>
+              <ItemBody>
+                <strong>System design público</strong>
+                Componentes reales, variantes, reglas y anti-patrones. Datos siempre mock.
+              </ItemBody>
+            </Item>
+            <Item>
+              <IconBox>
+                <BookOpen size={18} />
+              </IconBox>
+              <ItemBody>
+                <strong>Guía de carpetas y estado</strong>
+                Dónde vive cada capa, cómo extender rutas y cuándo usar Zustand frente a React Query.
+              </ItemBody>
+            </Item>
+          </List>
+        </Block>
+      </Main>
+      <Foot>
+        Área autenticada de ejemplo:
+        <FootLink href="/login">Iniciar sesión</FootLink>
+      </Foot>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\layout.tsx =====
+import './globals.css';
+import Providers from './providers';
+import { Metadata } from 'next';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'template-web',
+    template: '%s · template-web',
+  },
+  description: 'Starter Next.js: system design, arquitectura documentada y shell autenticado mínimo.',
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    type: 'website',
+    locale: 'es',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="es">
+      <body className="dotted-bg">
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\app\llms.txt\route.ts =====
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+export async function GET() {
+  const lines = [
+    'template-web starter',
+    '',
+    'Public surfaces: /, /system-design, /architecture',
+    'Auth: /login · Protected examples: /dashboard, /workspace, /patterns',
+    '',
+    `Site: ${SITE_URL}`,
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+  ];
+
+  return new Response(lines.join('\n'), {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    },
+  });
+}
+
+
+===== C:\ed\templates\template-web\src\app\page.tsx =====
+import type { Metadata } from 'next';
+import HomePageClient from './HomePageClient';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+export const metadata: Metadata = {
+  title: 'template-web · Starter',
+  description:
+    'Base Next.js con system design público, guía de arquitectura y shell autenticado mínimo para productos nuevos.',
+  alternates: { canonical: `${SITE_URL}/` },
+  openGraph: {
+    title: 'template-web · Starter',
+    description: 'Componentes, convenciones y área protegida de referencia.',
+    url: `${SITE_URL}/`,
+    type: 'website',
+  },
+  robots: { index: true, follow: true },
+};
+
+export default function Page() {
+  return <HomePageClient />;
+}
+
+
+===== C:\ed\templates\template-web\src\app\providers.tsx =====
+"use client";
+import { ThemeProvider } from "styled-components";
+import { theme, GlobalStyle } from "@/styles/global";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "@/lib/queryClient";
+import { Toaster } from "sonner";
+import { usePathname } from "next/navigation";
+import styled from "styled-components";
+
+import Footer from "@/components/Footer";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const hideFooter =
+    pathname.startsWith('/system-design') || pathname.startsWith('/architecture');
+
+  return (
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <QueryClientProvider client={queryClient}>
+        <Shell>
+          <Main>{children}</Main>
+          {!hideFooter && <Footer brandName="template-web" />}
+        </Shell>
+        <Toaster position="top-center" richColors theme="dark" />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+}
+
+const Shell = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Main = styled.div`
+  flex: 1;
+`;
+
+
+===== C:\ed\templates\template-web\src\app\robots.ts =====
+import type { MetadataRoute } from 'next';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: ['/'],
+    },
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
+  };
+}
+
+
+===== C:\ed\templates\template-web\src\app\sitemap.ts =====
+import type { MetadataRoute } from 'next';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date();
+  return [
+    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE_URL}/system-design`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/architecture`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/login`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+  ];
+}
+
+
+===== C:\ed\templates\template-web\src\app\system-design\lib\registry.ts =====
+export type ComponentTier = 'primitive' | 'composed' | 'domain-specific' | 'example-only';
+
+export type ComponentStatus = 'stable' | 'needs-review' | 'legacy-replaced' | 'example-only';
+
+/** Agrupación de navegación en /system-design. */
+export type NavSectionId =
+  | 'ui'
+  | 'forms'
+  | 'modals'
+  | 'uploads'
+  | 'help'
+  | 'feedback'
+  | 'data-display'
+  | 'navigation'
+  | 'layout-shell'
+  | 'examples';
+
+export type CatalogEntry = {
+  id: string;
+  name: string;
+  navSection: NavSectionId;
+  storage: 'ui' | 'component' | 'module';
+  tier: ComponentTier;
+  status: ComponentStatus;
+  importPath: string;
+  summary: string;
+  whenToUse: string[];
+  whenNotToUse: string[];
+  antiPatterns?: string[];
+  variants?: string[];
+  themeNotes?: string;
+  replacesLegacy?: string;
+  mergedFrom?: string[];
+  props: { name: string; description: string }[];
+};
+
+export const NAV_SECTION_LABELS: Record<NavSectionId, string> = {
+  ui: 'UI (primitives)',
+  forms: 'Forms',
+  modals: 'Modals',
+  uploads: 'Uploads',
+  help: 'Help',
+  feedback: 'Feedback',
+  'data-display': 'Data display',
+  navigation: 'Navigation',
+  'layout-shell': 'Layout / shell',
+  examples: 'Examples / legacy demos',
+};
+
+export const NAV_SECTION_ORDER: NavSectionId[] = [
+  'ui',
+  'forms',
+  'modals',
+  'uploads',
+  'help',
+  'feedback',
+  'data-display',
+  'navigation',
+  'layout-shell',
+  'examples',
+];
+
+export const SYSTEM_DESIGN_ENTRIES: CatalogEntry[] = [
+  {
+    id: 'button',
+    name: 'Button',
+    navSection: 'ui',
+    storage: 'ui',
+    tier: 'primitive',
+    status: 'stable',
+    importPath: '@/components/ui/Button',
+    summary: 'Primitive: botón con variantes primary, ghost y danger.',
+    whenToUse: ['Acciones en formularios y pies de modal.', 'Destructivas: $variant="danger".'],
+    whenNotToUse: ['Navegación principal (usa Link estilizado o patrón dedicado).', 'Icon-only sin semántica de botón.'],
+    antiPatterns: ['Varios primary compitiendo en la misma fila.'],
+    variants: ['primary', 'ghost', 'danger'],
+    themeNotes: 'theme.colors.primary, primaryHover, danger, border, radius.',
+    props: [
+      { name: '$variant', description: "'primary' | 'ghost' | 'danger'" },
+      { name: '...rest', description: 'HTMLButtonElement' },
+    ],
+  },
+  {
+    id: 'input',
+    name: 'Input',
+    navSection: 'ui',
+    storage: 'ui',
+    tier: 'primitive',
+    status: 'stable',
+    importPath: '@/components/ui/Input',
+    summary: 'Primitive: input de texto con foco alineado al theme.',
+    whenToUse: ['Campos simples controlados por el padre.'],
+    whenNotToUse: ['Select, datepicker, textarea (añadir primitive aparte).'],
+    antiPatterns: ['Sin <label> o aria-label.'],
+    props: [{ name: '...props', description: 'InputHTMLAttributes' }],
+  },
+  {
+    id: 'card',
+    name: 'Card',
+    navSection: 'ui',
+    storage: 'ui',
+    tier: 'primitive',
+    status: 'stable',
+    importPath: '@/components/ui/Card',
+    summary: 'Primitive: contenedor con borde y sombra sutil.',
+    whenToUse: ['Agrupar contenido en listas y detalles.', 'Secciones en páginas densas.'],
+    whenNotToUse: ['Sustituir modal o página completa.'],
+    antiPatterns: ['Anidar cards sin jerarquía tipográfica clara.'],
+    props: [{ name: 'children', description: 'ReactNode' }],
+  },
+  {
+    id: 'number-selector',
+    name: 'NumberSelector',
+    navSection: 'forms',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/NumberSelector',
+    summary: 'Grid numérico con teclado y exclusiones.',
+    whenToUse: ['Entero en rango acotado.'],
+    whenNotToUse: ['Decimales o rangos enormes sin virtualizar.'],
+    antiPatterns: ['max > 999 sin paginar/virtualizar.'],
+    themeNotes: 'Parte de celdas usa hex fijos; candidato a tokens.',
+    props: [
+      { name: 'value / onChange', description: 'number' },
+      { name: 'max / pad / disabledNumbers', description: 'opcionales' },
+    ],
+  },
+  {
+    id: 'time-range-selector',
+    name: 'TimeRangeSelector',
+    navSection: 'forms',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/TimeRangeSelector',
+    summary: 'Tabs de rango temporal genéricos (tipo string).',
+    whenToUse: ['Filtros de listados por periodo.'],
+    whenNotToUse: ['Fecha puntual o rangos que el API no entiende.'],
+    antiPatterns: ['Hardcodear labels de negocio dentro del componente.'],
+    variants: ['options custom', 'size sm | md'],
+    props: [
+      { name: 'value / onChange', description: 'genérico' },
+      { name: 'options', description: 'default TIME_RANGE_OPTIONS' },
+    ],
+  },
+  {
+    id: 'modal',
+    name: 'Modal + ModalActions',
+    navSection: 'modals',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/Modal',
+    summary: 'Modal canónico: ESC, overlay, actions y/o footer, tamaño default o narrow, backdrop default o soft.',
+    whenToUse: ['Confirmaciones, formularios cortos, ayuda modal.'],
+    whenNotToUse: ['Contenido muy largo; usar página o drawer.'],
+    antiPatterns: ['Torres de modales sin foco explícito.'],
+    variants: ['size: default | narrow', 'backdrop: default | soft', 'actions', 'footer', 'ModalActions'],
+    replacesLegacy: 'Un solo Modal: props `footer`, `size="narrow"`, `backdrop="soft"` cubren el antiguo AppModal.',
+    mergedFrom: ['AppModal absorbido en Modal.'],
+    themeNotes: 'theme.colors.panel, border, radius.',
+    props: [
+      { name: 'open / onClose', description: 'boolean, callback' },
+      { name: 'title', description: 'opcional' },
+      { name: 'actions / footer', description: 'ReactNode' },
+      { name: 'size / backdrop', description: 'ver variantes' },
+    ],
+  },
+  {
+    id: 'image-viewer-modal',
+    name: 'ImageViewerModal',
+    navSection: 'modals',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/ImageViewerModal',
+    summary: 'Visor pantalla completa para una imagen.',
+    whenToUse: ['Adjuntos en tablas.'],
+    whenNotToUse: ['Galería multi-slide.'],
+    antiPatterns: ['Alt vacío en imágenes informativas.'],
+    props: [
+      { name: 'visible / imageUrl / onClose', description: '' },
+      { name: 'alt', description: 'string' },
+    ],
+  },
+  {
+    id: 'image-upload',
+    name: 'ImageUpload',
+    navSection: 'uploads',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/ImageUpload',
+    summary: 'Zona de archivo + thumbs; contrato ImageUploadItem { id, thumbnail }.',
+    whenToUse: ['Flujos con subida vía hook de dominio en el padre.'],
+    whenNotToUse: ['Sin API de upload; no es primitive suelto.'],
+    antiPatterns: ['Importar DTO del backend dentro del componente.'],
+    variants: ['primaryLabel', 'hint'],
+    props: [
+      { name: 'items', description: 'ImageUploadItem[]' },
+      { name: 'onUpload / onRemove / loading', description: '' },
+    ],
+  },
+  {
+    id: 'contextual-help-pattern',
+    name: 'Patrón: ayuda contextual',
+    navSection: 'help',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/Modal',
+    summary: 'Contenido de ayuda en el módulo + shell Modal canónico (sin segundo overlay).',
+    whenToUse: ['Explicar un campo o paso sin salir del flujo.'],
+    whenNotToUse: ['Documentación larga; mejor página dedicada.'],
+    antiPatterns: ['Duplicar overlay “casi igual” solo por textos distintos.'],
+    props: [
+      { name: 'Contenido', description: 'ReactNode en children' },
+      { name: 'title / open / onClose', description: 'como Modal' },
+    ],
+  },
+  {
+    id: 'feedback-states',
+    name: 'Feedback (estados)',
+    navSection: 'feedback',
+    storage: 'component',
+    tier: 'composed',
+    status: 'needs-review',
+    importPath: '—',
+    summary: 'Toasts y banners globales: definir primitive cuando haya contrato estable; hasta entonces componer con Card + texto.',
+    whenToUse: ['Confirmación ligera, error de formulario inline.'],
+    whenNotToUse: ['Sustituir página de error dedicada.'],
+    antiPatterns: ['Stack de toasts sin prioridad ni dismiss.'],
+    props: [{ name: '—', description: 'Backlog: Toast primitive' }],
+  },
+  {
+    id: 'refresh-header',
+    name: 'RefreshHeader',
+    navSection: 'data-display',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/RefreshHeader',
+    summary: 'Cabecera de módulo con refetch y slot de acción.',
+    whenToUse: ['Pantallas con listados y React Query.'],
+    whenNotToUse: ['Vistas estáticas.'],
+    antiPatterns: ['Refetch + spinner duplicado en cada fila.'],
+    props: [
+      { name: 'title / subtitle', description: '' },
+      { name: 'onRefresh / isFetching', description: '' },
+      { name: 'action', description: 'ReactNode' },
+    ],
+  },
+  {
+    id: 'side-nav',
+    name: 'SideNav',
+    navSection: 'navigation',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/SideNav',
+    summary: 'Sidebar; contexto activo por props (sin stores de dominio dentro).',
+    whenToUse: ['Shell autenticado.'],
+    whenNotToUse: ['Marketing minimal.'],
+    antiPatterns: ['useWorkspaceStore u otros stores dentro del componente.'],
+    props: [
+      { name: 'routes / pathname', description: '' },
+      { name: 'activeContext', description: 'opcional' },
+      { name: 'onSignOut', description: '' },
+    ],
+  },
+  {
+    id: 'workspace-switcher',
+    name: 'WorkspaceSwitcher',
+    navSection: 'layout-shell',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/WorkspaceSwitcher',
+    summary: 'Selector de workspace activo; lista desde auth store, selección persistida en workspace store.',
+    whenToUse: ['Multi-workspace en barra superior del shell.'],
+    whenNotToUse: ['Selector genérico sin semántica de contexto.'],
+    antiPatterns: ['Fetch de lista dentro del componente si ya viene en /me.'],
+    props: [{ name: '—', description: 'Sin props; lectura de stores en el contenedor' }],
+  },
+  {
+    id: 'footer',
+    name: 'Footer',
+    navSection: 'navigation',
+    storage: 'component',
+    tier: 'composed',
+    status: 'stable',
+    importPath: '@/components/Footer',
+    summary: 'Pie público parametrizable.',
+    whenToUse: ['Landings en layouts públicos.'],
+    whenNotToUse: ['Área app densa.'],
+    props: [{ name: 'brandName / privacyHref / termsHref', description: '' }],
+  },
+  {
+    id: 'match-card',
+    name: 'MatchCard',
+    navSection: 'examples',
+    storage: 'component',
+    tier: 'example-only',
+    status: 'example-only',
+    importPath: '@/components/MatchCard',
+    summary: 'Demo de layout; no canónico de producto.',
+    whenToUse: ['Referencia visual en vitrina.'],
+    whenNotToUse: ['Dominio real.'],
+    antiPatterns: ['Dependencia desde módulos.'],
+    props: [{ name: 'match', description: 'DTO demo' }],
+  },
+  {
+    id: 'category-icons',
+    name: 'CategoryIcons',
+    navSection: 'examples',
+    storage: 'component',
+    tier: 'example-only',
+    status: 'example-only',
+    importPath: '@/components/CategoryIcons',
+    summary: 'Chips demo con emojis fijos.',
+    whenToUse: ['Solo vitrina.'],
+    whenNotToUse: ['Taxonomía producto.'],
+    props: [{ name: 'onSelect', description: 'opcional' }],
+  },
+  {
+    id: 'hero',
+    name: 'Hero',
+    navSection: 'examples',
+    storage: 'component',
+    tier: 'example-only',
+    status: 'example-only',
+    importPath: '@/components/Hero',
+    summary: 'Hero con asset placeholder.',
+    whenToUse: ['Marketing ejemplo.'],
+    whenNotToUse: ['Dashboard.'],
+    props: [{ name: 'title / subtitle', description: '' }],
+  },
+  {
+    id: 'marketing-header',
+    name: 'MarketingHeader',
+    navSection: 'examples',
+    storage: 'component',
+    tier: 'example-only',
+    status: 'example-only',
+    importPath: '@/components/MarketingHeader',
+    summary: 'TopBar + NavBar con rutas ficticias.',
+    whenToUse: ['Documentación.'],
+    whenNotToUse: ['App shell.'],
+    antiPatterns: ['Mezclar con SideNav.'],
+    props: [],
+  },
+];
+
+export const SYSTEM_RULES = {
+  structure: [
+    'Primitives → `src/components/ui/<Nombre>`.',
+    'Composed reusable → `src/components/<Nombre>/` (carpeta con el nombre del componente).',
+    'Dominio → `src/modules/<dominio>/components` hasta que el contrato sea neutral.',
+    'Vitrina pública → `/system-design` (mock, sin auth, noindex).',
+  ],
+  modals: [
+    'Un solo Modal canónico (`@/components/Modal`): `footer`, `size="narrow"`, `backdrop="soft"` para perfil “app”.',
+    'Formularios largos: página o drawer antes que modal alto.',
+  ],
+  help: [
+    'Patrón: contenido en módulo + `Modal` shared para el shell.',
+    'Evitar overlays duplicados solo por cambiar textos.',
+  ],
+  uploads: [
+    'UI de thumbs + dropzone: `ImageUpload` (items + callbacks).',
+    'Mutación y DTO: hooks/servicios en módulo.',
+  ],
+  feedback: [
+    'Errores de red: mensaje claro + retry donde aplique.',
+    'No mezclar estado remoto en Zustand si React Query ya lo posee.',
+  ],
+  inputs: [
+    'Primitive `Input` solo texto; selects/textarea como futuros primitives o composed dedicados.',
+  ],
+  tablesCardsLists: [
+    'Card primitive agrupa; tablas con columnas de dominio viven en módulos hasta extraer `DataTable` estable.',
+  ],
+  loadingEmptyError: [
+    'Alineado a React Query: isFetching en header, empty/error en vista.',
+    'No duplicar spinners globales por fila.',
+  ],
+  composition: [
+    'Componer primitives antes de inventar un tercer nivel de abstracción.',
+    'Si dos pantallas comparten 90% de UI, extraer composed en `src/components/<Nombre>`.',
+  ],
+  whenNotNewComponent: [
+    'Solo copy distinto → props.',
+    'Solo otro título en modal → children + title.',
+    'Casi igual a otro módulo → merge en una API estable.',
+  ],
+} as const;
+
+export const LEGACY_NOTES = {
+  merged: ['AppModal + Modal → un solo `Modal`.'],
+  duplicates: [
+    'Modales inline con styled propios en código heredado: migrar gradualmente a `Modal` para una sola capa de foco/z-index.',
+  ],
+  wrappers: [
+    'Ruta `/design-system` sustituida por `/system-design`.',
+    'Dominios de ejemplo heredados fuera del starter canónico; revívelos solo con módulos nuevos del producto instanciado.',
+  ],
+  quarantine: [],
+  routeAliases: [
+    'Sin aliases de ruta en el starter: cada URL debe mapear a una intención real.',
+  ],
+} as const;
+
+
+===== C:\ed\templates\template-web\src\app\system-design\page.tsx =====
+import type { Metadata } from 'next';
+import SystemDesignCatalog from './SystemDesignCatalog';
+
+export const metadata: Metadata = {
+  title: 'System design | template-web',
+  description: 'Componentes reusables y reglas de uso del starter template-web.',
+  robots: { index: false, follow: false },
+};
+
+export default function SystemDesignPage() {
+  return <SystemDesignCatalog />;
+}
+
+
+===== C:\ed\templates\template-web\src\app\system-design\SystemDesignCatalog.tsx =====
+'use client';
+
+import { useState } from 'react';
+import styled from 'styled-components';
+import { theme } from '@/styles/global';
+import { Package, Home, Crown } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { Modal, ModalActions } from '@/components/Modal';
+import { ImageViewerModal } from '@/components/ImageViewerModal';
+import { NumberSelector } from '@/components/NumberSelector';
+import { TimeRangeSelector, type TimeRange } from '@/components/TimeRangeSelector';
+import { ImageUpload, type ImageUploadItem } from '@/components/ImageUpload';
+import { RefreshHeader } from '@/components/RefreshHeader';
+import SideNav from '@/components/SideNav';
+import Footer from '@/components/Footer';
+import MatchCard from '@/components/MatchCard';
+import CategoryIcons from '@/components/CategoryIcons';
+import Hero from '@/components/Hero';
+import MarketingHeader from '@/components/MarketingHeader';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
+import {
+  NAV_SECTION_LABELS,
+  NAV_SECTION_ORDER,
+  SYSTEM_DESIGN_ENTRIES,
+  LEGACY_NOTES,
+  SYSTEM_RULES,
+  type CatalogEntry,
+  type NavSectionId,
+} from './lib/registry';
+
+const Page = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background: ${theme.colors.bg};
+  color: ${theme.colors.text};
+`;
+
+const Sidebar = styled.aside`
+  width: 230px;
+  flex-shrink: 0;
+  border-right: 1px solid ${theme.colors.border};
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-y: auto;
+  background: ${theme.colors.panel};
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+const NavTitle = styled.div`
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: ${theme.colors.muted};
+  margin: 16px 0 8px;
+  &:first-child {
+    margin-top: 0;
+  }
+`;
+
+const NavLink = styled.a`
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${theme.colors.muted};
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  &:hover {
+    color: ${theme.colors.primary};
+    background: ${theme.colors.bg};
+  }
+`;
+
+const Main = styled.main`
+  flex: 1;
+  padding: 36px 28px 80px;
+  max-width: 960px;
+`;
+
+const H1 = styled.h1`
+  margin: 0 0 10px;
+  font-size: clamp(1.65rem, 3.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+`;
+
+const Lead = styled.p`
+  margin: 0 0 18px;
+  font-size: 15px;
+  color: ${theme.colors.muted};
+  line-height: 1.6;
+  max-width: 62ch;
+`;
+
+const Section = styled.section`
+  margin-top: 40px;
+  scroll-margin-top: 16px;
+`;
+
+const H2 = styled.h2`
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 800;
+`;
+
+const H3 = styled.h3`
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 800;
+`;
+
+const List = styled.ul`
+  margin: 0;
+  padding-left: 1.2rem;
+  color: ${theme.colors.muted};
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+const EntryCard = styled.article`
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: ${theme.colors.panel};
+`;
+
+const EntryTitleRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+`;
+
+const Badge = styled.span<{ $t: 'st' | 'rv' | 'ex' | 'lg' }>`
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid
+    ${({ $t }) =>
+      $t === 'st' ? theme.colors.primary : $t === 'rv' ? '#f59e0b' : $t === 'lg' ? '#8b5cf6' : '#64748b'};
+  color: ${({ $t }) =>
+    $t === 'st' ? theme.colors.primary : $t === 'rv' ? '#f59e0b' : $t === 'lg' ? '#a78bfa' : '#94a3b8'};
+`;
+
+const Meta = styled.span`
+  font-size: 11px;
+  color: ${theme.colors.muted};
+  font-weight: 700;
+`;
+
+const Preview = styled.div`
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  background: ${theme.colors.bg};
+  border: 1px dashed ${theme.colors.border};
+`;
+
+const Code = styled.code`
+  font-size: 12px;
+  display: block;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow-x: auto;
+  margin-top: 10px;
+`;
+
+const Row = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+`;
+
+function statusBadge(status: CatalogEntry['status']) {
+  if (status === 'stable') return <Badge $t="st">stable</Badge>;
+  if (status === 'needs-review') return <Badge $t="rv">needs-review</Badge>;
+  if (status === 'legacy-replaced') return <Badge $t="lg">legacy-replaced</Badge>;
+  return <Badge $t="ex">example-only</Badge>;
+}
+
+function PreviewFor({ entry }: { entry: CatalogEntry }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [narrowOpen, setNarrowOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [imgOpen, setImgOpen] = useState(false);
+  const [num, setNum] = useState(7);
+  const [tr, setTr] = useState<TimeRange>('THIS_WEEK');
+  const mockImages: ImageUploadItem[] = [
+    { id: '1', thumbnail: 'https://picsum.photos/seed/sd1/80/80' },
+    { id: '2', thumbnail: 'https://picsum.photos/seed/sd2/80/80' },
+  ];
+
+  switch (entry.id) {
+    case 'button':
+      return (
+        <Row>
+          <Button type="button">Primary</Button>
+          <Button type="button" $variant="ghost">
+            Ghost
+          </Button>
+          <Button type="button" $variant="danger">
+            Danger
+          </Button>
+          <Button type="button" disabled>
+            Disabled
+          </Button>
+        </Row>
+      );
+    case 'input':
+      return <Input placeholder="Texto de ejemplo" aria-label="Demo" />;
+    case 'card':
+      return <Card>Contenido dentro de Card</Card>;
+    case 'number-selector':
+      return <NumberSelector value={num} onChange={setNum} max={24} pad={2} />;
+    case 'modal':
+      return (
+        <>
+          <Row>
+            <Button type="button" onClick={() => setModalOpen(true)}>
+              Modal + ModalActions
+            </Button>
+            <Button type="button" $variant="ghost" onClick={() => setNarrowOpen(true)}>
+              Narrow + soft + footer (ex-AppModal)
+            </Button>
+          </Row>
+          <Modal
+            open={modalOpen}
+            title="Ejemplo"
+            onClose={() => setModalOpen(false)}
+            actions={<ModalActions onCancel={() => setModalOpen(false)} onConfirm={() => setModalOpen(false)} />}
+          >
+            <p style={{ margin: 0 }}>Contenido local, sin API.</p>
+          </Modal>
+          <Modal
+            open={narrowOpen}
+            title="Formulario corto"
+            onClose={() => setNarrowOpen(false)}
+            size="narrow"
+            backdrop="soft"
+            footer={
+              <Row>
+                <Button type="button" $variant="ghost" onClick={() => setNarrowOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={() => setNarrowOpen(false)}>
+                  Guardar
+                </Button>
+              </Row>
+            }
+          >
+            <p style={{ margin: 0 }}>Mismo componente Modal con props de perfil “app”.</p>
+          </Modal>
+        </>
+      );
+    case 'image-viewer-modal':
+      return (
+        <>
+          <Button type="button" onClick={() => setImgOpen(true)}>
+            Ver imagen
+          </Button>
+          <ImageViewerModal visible={imgOpen} imageUrl="https://picsum.photos/seed/sdview/800/600" onClose={() => setImgOpen(false)} />
+        </>
+      );
+    case 'time-range-selector':
+      return <TimeRangeSelector value={tr} onChange={setTr} />;
+    case 'image-upload':
+      return (
+        <ImageUpload items={mockImages} onUpload={() => {}} onRemove={() => {}} loading={false} />
+      );
+    case 'contextual-help-pattern':
+      return (
+        <>
+          <Button type="button" $variant="ghost" onClick={() => setHelpOpen(true)}>
+            Abrir ayuda contextual
+          </Button>
+          <Modal open={helpOpen} title="Ayuda" onClose={() => setHelpOpen(false)} size="narrow" backdrop="soft">
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: theme.colors.muted }}>
+              El contenido vive en el módulo; el shell es siempre <code>Modal</code> compartido.
+            </p>
+          </Modal>
+        </>
+      );
+    case 'feedback-states':
+      return (
+        <Card>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: theme.colors.muted }}>
+            Backlog: primitive de toast. Hoy: mensajes inline, <code>Card</code> o estado vacío explícito junto a React Query.
+          </p>
+        </Card>
+      );
+    case 'workspace-switcher':
+      return (
+        <div style={{ maxWidth: 280 }}>
+          <WorkspaceSwitcher />
+          <p style={{ margin: '12px 0 0', fontSize: 12, color: theme.colors.muted }}>
+            Sin sesión muestra “Sin workspaces”; con <code>/auth/me</code> se llena el desplegable.
+          </p>
+        </div>
+      );
+    case 'refresh-header':
+      return (
+        <RefreshHeader
+          title="Módulo demo"
+          subtitle="Datos estáticos"
+          isFetching={false}
+          onRefresh={() => {}}
+          action={<Button type="button">Acción</Button>}
+        />
+      );
+    case 'side-nav': {
+      const routes = [
+        { href: '#sd-nav-a', label: 'System design', icon: Home, section: 'navigation' as const },
+        { href: '#sd-nav-b', label: 'Cuenta', icon: Crown, section: 'account' as const, highlight: true },
+        { href: '#sd-nav-c', label: 'Ejemplo', icon: Package, section: 'navigation' as const },
+      ];
+      return (
+        <div style={{ height: 380, overflow: 'hidden', borderRadius: 10 }}>
+          <SideNav
+            open
+            onClose={() => {}}
+            pathname="#sd-nav-c"
+            routes={routes}
+            user={{ name: 'Usuario demo', role: 'ADMIN' }}
+            onSignOut={() => {}}
+            activeContext={{
+              href: '#',
+              title: 'Contexto',
+              name: 'Proyecto demo',
+              icon: Package,
+            }}
+            footerNote="Preview estático"
+          />
+        </div>
+      );
+    }
+    case 'footer':
+      return (
+        <div style={{ transform: 'scale(0.95)', transformOrigin: 'top left' }}>
+          <Footer brandName="Demo" />
+        </div>
+      );
+    case 'match-card':
+      return <MatchCard match={{ teamA: 'Alpha', teamB: 'Beta', time: 'Hoy 18:00', odds: ['1.90', '3.40', '4.10'] }} />;
+    case 'category-icons':
+      return <CategoryIcons />;
+    case 'hero':
+      return (
+        <div style={{ maxWidth: 480 }}>
+          <Hero title="Titulo hero" subtitle="Subtítulo de ejemplo" />
+        </div>
+      );
+    case 'marketing-header':
+      return (
+        <div style={{ maxHeight: 200, overflow: 'auto' }}>
+          <MarketingHeader />
+        </div>
+      );
+    default:
+      return <span style={{ color: theme.colors.muted }}>Sin preview.</span>;
+  }
+}
+
+function entriesByNav(): Record<NavSectionId, CatalogEntry[]> {
+  const m = {} as Record<NavSectionId, CatalogEntry[]>;
+  for (const s of NAV_SECTION_ORDER) m[s] = [];
+  for (const e of SYSTEM_DESIGN_ENTRIES) {
+    m[e.navSection].push(e);
+  }
+  return m;
+}
+
+export default function SystemDesignCatalog() {
+  const byNav = entriesByNav();
+
+  return (
+    <Page>
+      <Sidebar>
+        <NavTitle>Contenido</NavTitle>
+        <NavLink href="#intro">Introducción</NavLink>
+        <NavLink href="#rules">Reglas</NavLink>
+        <NavLink href="#legacy">Legacy / cleanup</NavLink>
+        {NAV_SECTION_ORDER.map((s) => (
+          <NavLink key={s} href={`#nav-${s}`}>
+            {NAV_SECTION_LABELS[s]}
+          </NavLink>
+        ))}
+      </Sidebar>
+      <Main>
+        <H1 id="intro">System design</H1>
+        <Lead>
+          Catálogo operativo de la base reusable en <code style={{ color: theme.colors.primary }}>src/components</code>:
+          primitives en <code>src/components/ui</code>, piezas compuestas en <code>src/components/&lt;Nombre&gt;/</code>. Esta ruta es
+          pública, sin auth, con datos mock — sirve para alinear equipos al construir producto encima del template.
+        </Lead>
+        <Lead>
+          <strong>Stable:</strong> listo para copiar. <strong>Needs-review / example:</strong> ver badge. Cada ficha une preview,
+          reglas de uso y anti-patrones — no es un catálogo de cajas, es un manual breve por componente.
+        </Lead>
+
+        <Section id="rules">
+          <H2>Reglas del sistema</H2>
+          <H3>Estructura de carpetas</H3>
+          <List>
+            {SYSTEM_RULES.structure.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Modales</H3>
+          <List>
+            {SYSTEM_RULES.modals.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Help</H3>
+          <List>
+            {SYSTEM_RULES.help.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Uploads</H3>
+          <List>
+            {SYSTEM_RULES.uploads.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Feedback</H3>
+          <List>
+            {SYSTEM_RULES.feedback.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Inputs</H3>
+          <List>
+            {SYSTEM_RULES.inputs.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Tablas / cards / listas</H3>
+          <List>
+            {SYSTEM_RULES.tablesCardsLists.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Loading / empty / error</H3>
+          <List>
+            {SYSTEM_RULES.loadingEmptyError.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Composición</H3>
+          <List>
+            {SYSTEM_RULES.composition.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Cuándo NO crear componente nuevo</H3>
+          <List>
+            {SYSTEM_RULES.whenNotNewComponent.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+        </Section>
+
+        <Section id="legacy">
+          <H2>Legacy / cleanup</H2>
+          <H3>Fusionados</H3>
+          <List>
+            {LEGACY_NOTES.merged.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Duplicados / deuda</H3>
+          <List>
+            {LEGACY_NOTES.duplicates.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Wrappers / rutas</H3>
+          <List>
+            {LEGACY_NOTES.wrappers.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Cuarentena / backlog</H3>
+          <List>
+            {LEGACY_NOTES.quarantine.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+          <H3>Aliases de ruta</H3>
+          <List>
+            {LEGACY_NOTES.routeAliases.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </List>
+        </Section>
+
+        {NAV_SECTION_ORDER.map((nav) => (
+          <Section key={nav} id={`nav-${nav}`}>
+            <H2>{NAV_SECTION_LABELS[nav]}</H2>
+            {byNav[nav].map((entry) => (
+              <EntryCard key={entry.id}>
+                <EntryTitleRow>
+                  <H3 style={{ margin: 0 }}>{entry.name}</H3>
+                  {statusBadge(entry.status)}
+                  <Meta>
+                    {entry.storage === 'ui' ? 'ui' : entry.storage === 'module' ? 'module' : 'component'}
+                  </Meta>
+                  <Meta>Tier: {entry.tier}</Meta>
+                </EntryTitleRow>
+                <p style={{ margin: '0 0 8px', fontSize: 14, color: theme.colors.muted, lineHeight: 1.5 }}>{entry.summary}</p>
+                <H3>Ubicación / import</H3>
+                <Code>
+                  {entry.importPath === '—'
+                    ? '— (ver texto; sin import único)'
+                    : entry.importPath.startsWith('@/modules')
+                      ? entry.importPath
+                      : `import { ... } from '${entry.importPath}';`}
+                </Code>
+                {entry.variants?.length ? (
+                  <>
+                    <H3>Variantes</H3>
+                    <List>
+                      {entry.variants.map((v) => (
+                        <li key={v}>{v}</li>
+                      ))}
+                    </List>
+                  </>
+                ) : null}
+                <H3>Props</H3>
+                <List>
+                  {entry.props.map((p) => (
+                    <li key={p.name}>
+                      <strong>{p.name}</strong> — {p.description}
+                    </li>
+                  ))}
+                </List>
+                <H3>Cuándo usarlo</H3>
+                <List>
+                  {entry.whenToUse.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </List>
+                <H3>Cuándo NO usarlo</H3>
+                <List>
+                  {entry.whenNotToUse.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </List>
+                {entry.antiPatterns?.length ? (
+                  <>
+                    <H3>Anti-patrones</H3>
+                    <List>
+                      {entry.antiPatterns.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </List>
+                  </>
+                ) : null}
+                {entry.themeNotes ? (
+                  <>
+                    <H3>Theme</H3>
+                    <p style={{ margin: 0, fontSize: 14, color: theme.colors.muted }}>{entry.themeNotes}</p>
+                  </>
+                ) : null}
+                {entry.replacesLegacy ? (
+                  <>
+                    <H3>Reemplazos</H3>
+                    <p style={{ margin: 0, fontSize: 14, color: theme.colors.muted }}>{entry.replacesLegacy}</p>
+                  </>
+                ) : null}
+                {entry.mergedFrom?.length ? (
+                  <>
+                    <H3>Fusión</H3>
+                    <List>
+                      {entry.mergedFrom.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </List>
+                  </>
+                ) : null}
+                <H3>Preview</H3>
+                <Preview>
+                  <PreviewFor entry={entry} />
+                </Preview>
+              </EntryCard>
+            ))}
+          </Section>
+        ))}
+      </Main>
+    </Page>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\CategoryIcons\CategoryIcons.tsx =====
+"use client";
+
+import styled, { keyframes } from "styled-components";
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+`;
+
+const Category = styled.button`
+  background: #2d365f;
+  color: #f7fafc;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 10px;
+  width: 80px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  animation: ${fadeUp} 0.6s ease-out forwards;
+  transition: transform 0.2s, background 0.2s;
+  &:hover {
+    background: #3a4475;
+    transform: scale(1.05);
+  }
+`;
+
+interface CategoryItem {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface CategoryIconsProps {
+  onSelect?: (id: string) => void;
+}
+
+export default function CategoryIcons({ onSelect }: CategoryIconsProps) {
+  const categories: CategoryItem[] = [
+    { id: 'all', label: 'All', icon: '🌐' },
+    { id: 'football', label: 'Football', icon: '⚽' },
+    { id: 'tennis', label: 'Tennis', icon: '🎾' },
+    { id: 'basketball', label: 'Basketball', icon: '🏀' },
+    { id: 'hockey', label: 'Hockey', icon: '🏒' },
+    { id: 'volleyball', label: 'Volleyball', icon: '🏐' },
+  ];
+  return (
+    <Wrapper>
+      {categories.map(cat => (
+        <Category key={cat.id} type="button" onClick={() => onSelect?.(cat.id)}>
+          <div style={{ fontSize: '24px' }}>{cat.icon}</div>
+          <div style={{ fontSize: '12px', marginTop: '4px' }}>{cat.label}</div>
+        </Category>
+      ))}
+    </Wrapper>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\CategoryIcons\index.ts =====
+export { default } from "./CategoryIcons";
+
+
+===== C:\ed\templates\template-web\src\components\Footer\Footer.tsx =====
+"use client";
+
+import Link from "next/link";
+import styled, { keyframes } from "styled-components";
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const FooterContainer = styled.footer`
+  background: linear-gradient(180deg, #1f2a48, #0d1424);
+  padding: 32px 16px;
+  color: #a0aec0;
+  text-align: center;
+  animation: ${fadeIn} 0.6s ease-out forwards;
+`;
+
+const LinkList = styled.div`
+  margin-top: 8px;
+  a {
+    color: #63b3ed;
+    margin: 0 8px;
+    font-size: 14px;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+export type FooterProps = {
+  brandName?: string;
+  privacyHref?: string;
+  termsHref?: string;
+};
+
+export default function Footer({
+  brandName = 'App',
+  privacyHref = '/privacy',
+  termsHref = '/terms',
+}: FooterProps) {
+  return (
+    <FooterContainer>
+      <p>&copy; {new Date().getFullYear()} {brandName}. All rights reserved.</p>
+      <LinkList>
+        <Link href={privacyHref}>Privacy Policy</Link>
+        <Link href={termsHref}>Terms of Service</Link>
+      </LinkList>
+    </FooterContainer>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\Footer\index.ts =====
+export { default } from "./Footer";
+export type { FooterProps } from "./Footer";
+
+
+===== C:\ed\templates\template-web\src\components\Hero\Hero.tsx =====
+"use client";
+
+import styled, { keyframes } from "styled-components";
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const Section = styled.section`
+  background: url('/placeholder_hero.jpg') center/cover no-repeat;
+  padding: 80px 20px;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+`;
+
+const Content = styled.div`
+  position: relative;
+  z-index: 1;
+`;
+
+const Title = styled.h1`
+  font-size: 40px;
+  margin-bottom: 12px;
+  animation: ${fadeIn} 0.8s ease-out forwards;
+`;
+
+const Subtitle = styled.p`
+  font-size: 18px;
+  color: #cbd5e1;
+  animation: ${fadeIn} 1s ease-out forwards;
+`;
+
+interface HeroProps {
+  title: string;
+  subtitle?: string;
+}
+
+export default function Hero({ title, subtitle }: HeroProps) {
+  return (
+    <Section>
+      <Overlay />
+      <Content>
+        <Title>{title}</Title>
+        {subtitle && <Subtitle>{subtitle}</Subtitle>}
+      </Content>
+    </Section>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\Hero\index.ts =====
+export { default } from "./Hero";
+
+
+===== C:\ed\templates\template-web\src\components\ImageUpload\ImageUpload.tsx =====
+'use client';
+
+import React from 'react';
+import styled from 'styled-components';
+import { UploadCloud, X, Loader2 } from 'lucide-react';
+import { theme } from '@/styles/global';
+
+export type ImageUploadItem = {
+  id: string;
+  thumbnail: string;
+};
+
+const UploadContainer = styled.div`
+  background: ${theme.colors.panel};
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid ${theme.colors.border};
+`;
+
+const DropZone = styled.label`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed ${theme.colors.primaryHover};
+  border-radius: 8px;
+  padding: 40px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: ${theme.colors.bg}; }
+  input { display: none; }
+`;
+
+const ThumbGrid = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+`;
+
+const ThumbWrapper = styled.div`
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid ${theme.colors.border};
+  img { width: 100%; height: 100%; object-fit: cover; }
+`;
+
+const RemoveBtn = styled.button`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+`;
+
+export type ImageUploadProps = {
+  items: ImageUploadItem[];
+  onUpload: (files: FileList) => void;
+  onRemove: (id: string) => void;
+  loading: boolean;
+  primaryLabel?: string;
+  hint?: string;
+};
+
+export const ImageUpload: React.FC<ImageUploadProps> = ({
+  items,
+  onUpload,
+  onRemove,
+  loading,
+  primaryLabel = 'Subir imagen',
+  hint = 'PNG, JPG (máx. según API)',
+}) => {
+  return (
+    <UploadContainer>
+      <DropZone>
+        <input type="file" multiple accept="image/*" onChange={(e) => e.target.files && onUpload(e.target.files)} />
+        {loading ? <Loader2 className="animate-spin" color="#10b981" /> : <UploadCloud size={32} color={theme.colors.muted} />}
+        <p style={{ marginTop: '8px', fontSize: '14px' }}>
+          <span style={{ color: theme.colors.primaryHover, fontWeight: 600 }}>{primaryLabel}</span>
+          {' '}o arrastrar y soltar
+        </p>
+        <span style={{ fontSize: '11px', color: theme.colors.muted }}>{hint}</span>
+      </DropZone>
+
+      <ThumbGrid>
+        {items.map((img, index) => (
+          <ThumbWrapper key={img.id}>
+            <RemoveBtn type="button" onClick={() => onRemove(img.id)}><X size={12} /></RemoveBtn>
+            <img src={img.thumbnail} alt="" />
+            {index === 0 && (
+              <div style={{ position: 'absolute', bottom: 0, width: '100%', background: '#10b981', color: 'white', fontSize: '8px', textAlign: 'center', fontWeight: 700 }}>PRINCIPAL</div>
+            )}
+          </ThumbWrapper>
+        ))}
+      </ThumbGrid>
+    </UploadContainer>
+  );
+};
+
+
+===== C:\ed\templates\template-web\src\components\ImageUpload\index.ts =====
+export { ImageUpload, type ImageUploadItem, type ImageUploadProps } from "./ImageUpload";
+
+
+===== C:\ed\templates\template-web\src\components\ImageViewerModal\ImageViewerModal.tsx =====
+'use client';
+
+import { useEffect } from 'react';
+import styled from 'styled-components';
+import { X } from 'lucide-react';
+import { theme } from '@/styles/global';
+
+const Overlay = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+`;
+
+const Content = styled.div`
+    position: relative;
+    width: min(1100px, 100%);
+    max-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`;
+
+const CloseButton = styled.button`
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid ${theme.colors.border};
+    border-radius: 9999px;
+    background: ${theme.colors.panel};
+    color: ${theme.colors.text};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+`;
+
+const Image = styled.img`
+    width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+`;
+
+export interface ImageViewerModalProps {
+    visible: boolean;
+    imageUrl?: string;
+    onClose: () => void;
+    alt?: string;
+}
+
+export function ImageViewerModal({ visible, imageUrl, onClose, alt = 'Imagen' }: ImageViewerModalProps) {
+    useEffect(() => {
+        if (!visible) return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [visible, onClose]);
+
+    if (!visible || !imageUrl) return null;
+
+    return (
+        <Overlay onClick={onClose}>
+            <Content onClick={(event) => event.stopPropagation()}>
+                <CloseButton type="button" onClick={onClose} aria-label="Cerrar imagen">
+                    <X size={18} />
+                </CloseButton>
+                <Image src={imageUrl} alt={alt} />
+            </Content>
+        </Overlay>
+    );
+}
+
+
+===== C:\ed\templates\template-web\src\components\ImageViewerModal\index.ts =====
+export { ImageViewerModal, type ImageViewerModalProps } from "./ImageViewerModal";
+
+
+===== C:\ed\templates\template-web\src\components\MarketingHeader\index.ts =====
+export { default } from "./MarketingHeader";
+
+
+===== C:\ed\templates\template-web\src\components\MarketingHeader\MarketingHeader.tsx =====
+"use client";
+
+import TopBar from "./TopBar";
+import NavBar from "./NavBar";
+import styled from "styled-components";
+
+const Wrapper = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+`;
+
+export default function MarketingHeader() {
+  return (
+    <Wrapper>
+      <TopBar />
+      <NavBar />
+    </Wrapper>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\MarketingHeader\NavBar.tsx =====
+"use client";
+
+import Link from "next/link";
+import { usePathname } from 'next/navigation';
+import styled, { keyframes } from "styled-components";
+
+const slideDown = keyframes`
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+`;
+
+const NavContainer = styled.nav`
+  background: #1d2340;
+  padding: 8px 16px;
+  animation: ${slideDown} 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+`;
+
+const Menu = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+`;
+
+const MenuItem = styled.li`
+  position: relative;
+  &:hover > ul {
+    display: block;
+  }
+  a {
+    color: #f7fafc;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    &:hover {
+      background: #2f3864;
+    }
+  }
+`;
+
+const SubMenu = styled.ul`
+  list-style: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #262f56;
+  padding: 8px 0;
+  min-width: 160px;
+  border-radius: 4px;
+  display: none;
+  z-index: 1000;
+  li {
+    padding: 0;
+    margin: 0;
+    a {
+      display: block;
+      padding: 6px 12px;
+      color: #f7fafc;
+      &:hover {
+        background: #2f3864;
+      }
+    }
+  }
+`;
+
+const ROUTES = [
+  { href: '/dashboard', label: 'Inicio' },
+  { href: '/raffles',   label: 'Rifas' },
+  { href: '/tickets',   label: 'Mis tickets' },
+  { href: '/results',   label: 'Resultados' },
+  { href: '/profile',   label: 'Perfil' },
+];
+
+const NavLink = styled(Link)<{ $active?: boolean }>`
+  padding:8px 10px; border-radius:${({theme})=>theme.radius};
+  border:1px solid ${({theme,$active})=>$active?theme.colors.primary:theme.colors.border};
+  background:${({theme,$active})=>$active?theme.colors.primary:'transparent'};
+  color:${({theme,$active})=>$active?'#fff':theme.colors.text};
+  font-weight:600;
+  &:hover{ background:${({theme,$active})=>$active?theme.colors.primaryHover:'#181b22'}; }
+`;
+
+export default function NavBar() {
+  const pathname = usePathname();
+
+  return (
+    <NavContainer>
+      <Menu>
+        <MenuItem><Link href="/">Home</Link></MenuItem>
+        <MenuItem><Link href="/about">About Us</Link></MenuItem>
+        <MenuItem>
+          {ROUTES.map(r => (
+            <NavLink key={r.href} href={r.href} $active={pathname === r.href}>
+              {r.label}
+            </NavLink>
+          ))}
+          <Link href="/all-bets">All Bets</Link>
+          <SubMenu>
+            <li><Link href="/all-bets">All Bets</Link></li>
+            <li><Link href="/all-bets/in-play">In Play</Link></li>
+            <li><Link href="/all-bets/upcoming">Upcoming</Link></li>
+            <li><Link href="/all-bets/finished">Finished</Link></li>
+            <li><Link href="/match/1">Bet Details</Link></li>
+          </SubMenu>
+        </MenuItem>
+        <MenuItem><Link href="/contact">Contact Us</Link></MenuItem>
+        <MenuItem>
+          <Link href="#">Pages</Link>
+          <SubMenu>
+            <li><Link href="/blog">Blog</Link></li>
+            <li><Link href="/login">Login</Link></li>
+            <li><Link href="/register">Register</Link></li>
+            <li><Link href="/affiliate">Affiliate</Link></li>
+            <li><Link href="/promotion">Promotion</Link></li>
+            <li><Link href="/promo-details">Promo Details</Link></li>
+            <li><Link href="/ranking">Ranking</Link></li>
+          </SubMenu>
+        </MenuItem>
+        <MenuItem><Link href="/faq">FAQ</Link></MenuItem>
+        <MenuItem>
+          <Link href="/dashboard">Dashboard</Link>
+          <SubMenu>
+            <li><Link href="/dashboard">Overview</Link></li>
+            <li><Link href="/dashboard/bet-history">Bet History</Link></li>
+            <li><Link href="/dashboard/transaction">Transaction</Link></li>
+            <li><Link href="/dashboard/deposit">Deposit</Link></li>
+            <li><Link href="/dashboard/withdraw">Withdraw</Link></li>
+            <li><Link href="/dashboard/referral">Referral</Link></li>
+            <li><Link href="/dashboard/settings">Settings</Link></li>
+          </SubMenu>
+        </MenuItem>
+      </Menu>
+    </NavContainer>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\MarketingHeader\TopBar.tsx =====
+"use client";
+
+import { useEffect, useState } from "react";
+import styled, { keyframes } from "styled-components";
+
+const slideDown = keyframes`
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+`;
+
+const Bar = styled.div`
+  background: #0e163c;
+  color: #a0aec0;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 16px;
+  border-bottom: 1px solid #1c2456;
+  animation: ${slideDown} 0.6s ease-out forwards;
+`;
+
+const LeftSection = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+`;
+
+const RightSection = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+export default function TopBar() {
+  const [now, setNow] = useState<string>(() => new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <Bar>
+      <LeftSection>
+        <span>Hi, Guest</span>
+        <span>demo@example.com</span>
+        <span>ENG</span>
+        <span>{now}</span>
+      </LeftSection>
+      <RightSection>
+        <span role="button" style={{ cursor: 'pointer' }}>Dark Mode</span>
+      </RightSection>
+    </Bar>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\MatchCard\index.ts =====
+export { default } from "./MatchCard";
+export type { MatchCardMatch } from "./MatchCard";
+
+
+===== C:\ed\templates\template-web\src\components\MatchCard\MatchCard.tsx =====
+"use client";
+
+import styled, { keyframes } from "styled-components";
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fc;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  animation: ${fadeUp} 0.5s ease-out forwards;
+  transition: box-shadow 0.2s;
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  }
+`;
+
+const Left = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 12px;
+`;
+
+const DateTime = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+`;
+
+const Teams = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+const Scores = styled.div`
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: bold;
+  color: #334155;
+`;
+
+const Center = styled.div`
+  display: flex;
+  gap: 8px;
+  flex: 2;
+`;
+
+const OddsBox = styled.div`
+  background: #ffffff;
+  border: 1px solid #e5eaf3;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #1e293b;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.2s;
+  &:hover {
+    background: #eef2fc;
+    transform: translateY(-2px);
+  }
+`;
+
+const OddValue = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d4ed8;
+`;
+
+const OddLabel = styled.div`
+  font-size: 10px;
+  color: #64748b;
+`;
+
+const Right = styled.div`
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 40px;
+  justify-content: flex-end;
+  font-size: 14px;
+`;
+
+export interface MatchCardMatch {
+  teamA: string;
+  teamB: string;
+  time: string;
+  odds: string[];
+}
+
+interface MatchCardProps {
+  match: MatchCardMatch;
+}
+
+export default function MatchCard({ match }: MatchCardProps) {
+  return (
+    <Wrapper>
+      <Left>
+        <DateTime>
+          <span>{match.time}</span>
+        </DateTime>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Teams>
+            <div>{match.teamA}</div>
+            <div>{match.teamB}</div>
+          </Teams>
+          <Scores>
+            <div>0</div>
+            <div>0</div>
+          </Scores>
+        </div>
+      </Left>
+      <Center>
+        {match.odds && match.odds.map((odd, idx) => (
+          <OddsBox key={idx}>
+            <OddValue>{odd}</OddValue>
+            <OddLabel>
+              {idx === 0 ? match.teamA : idx === 1 ? 'Draw' : match.teamB}
+            </OddLabel>
+          </OddsBox>
+        ))}
+      </Center>
+      <Right>
+        <span>›</span>
+      </Right>
+    </Wrapper>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\Modal\index.ts =====
+export { Modal, ModalActions } from "./Modal";
+export type { ModalProps } from "./Modal";
+
+
+===== C:\ed\templates\template-web\src\components\Modal\Modal.styles.tsx =====
+import styled from 'styled-components';
+
+export const Overlay = styled.div<{ $soft?: boolean }>`
+  position: fixed;
+  inset: 0;
+  background: ${({ $soft }) => ($soft ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.6)')};
+  ${({ $soft }) => ($soft ? 'backdrop-filter: blur(2px);' : '')}
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+`;
+
+export const Dialog = styled.div<{ $narrow?: boolean }>`
+  width: 100%;
+  max-width: ${({ $narrow }) => ($narrow ? '400px' : '520px')};
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: ${({ theme }) => theme.colors.panel};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius};
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+`;
+
+export const Header = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  flex-shrink: 0;
+`;
+
+export const Title = styled.h3`
+  margin: 0;
+  font-size: 16px;
+`;
+
+export const CloseButton = styled.button`
+  background: transparent;
+  border: 0;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+`;
+
+export const Body = styled.div`
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+`;
+
+export const Footer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  flex-shrink: 0;
+`;
+
+
+===== C:\ed\templates\template-web\src\components\Modal\Modal.tsx =====
+"use client";
+import React, { useEffect } from "react";
+import { Overlay, Dialog, Header, Title, Body, CloseButton, Footer } from "./Modal.styles";
+import { Button } from "@/components/ui/Button";
+
+export type ModalProps = {
+  open: boolean;
+  title?: string;
+  onClose: () => void;
+  children?: React.ReactNode;
+  /** Fila de acciones predefinida (p. ej. ModalActions) */
+  actions?: React.ReactNode;
+  /** Pie personalizado (formularios); se muestra junto a `actions` si ambos existen */
+  footer?: React.ReactNode;
+  /** narrow ≈ 400px (antes AppModal); default ≈ 520px */
+  size?: "default" | "narrow";
+  /** soft = overlay más claro + blur (perfil anterior AppModal) */
+  backdrop?: "default" | "soft";
+};
+
+export const Modal: React.FC<ModalProps> = ({
+  open,
+  title,
+  onClose,
+  children,
+  actions,
+  footer,
+  size = "default",
+  backdrop = "default",
+}) => {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const bar = actions || footer ? (
+    <Footer>
+      {actions}
+      {footer}
+    </Footer>
+  ) : null;
+
+  return (
+    <Overlay $soft={backdrop === "soft"} onClick={onClose}>
+      <Dialog
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "modal-title" : undefined}
+        $narrow={size === "narrow"}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Header>
+          <Title id="modal-title">{title}</Title>
+          <CloseButton type="button" aria-label="Cerrar" onClick={onClose}>
+            ×
+          </CloseButton>
+        </Header>
+        <Body>{children}</Body>
+        {bar}
+      </Dialog>
+    </Overlay>
+  );
+};
+
+export const ModalActions: React.FC<{
+  onCancel: () => void;
+  onConfirm: () => void;
+  confirmText?: string;
+  loading?: boolean;
+}> = ({ onCancel, onConfirm, confirmText = "Continuar", loading }) => (
+  <>
+    <Button $variant="ghost" type="button" onClick={onCancel} disabled={loading}>
+      Cancelar
+    </Button>
+    <Button type="button" onClick={onConfirm} disabled={loading}>
+      {loading ? "Procesando…" : confirmText}
+    </Button>
+  </>
+);
+
+
+===== C:\ed\templates\template-web\src\components\NumberSelector\index.ts =====
+export { NumberSelector } from './NumberSelector';
+export type { NumberSelectorProps } from './NumberSelector';
+
+
+===== C:\ed\templates\template-web\src\components\NumberSelector\NumberSelector.styles.ts =====
+import styled from 'styled-components';
+
+export const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 8px;
+`;
+
+export const Cell = styled.button<{ $active?: boolean; $disabled?: boolean }>`
+  background: ${({ $active }) => ($active ? '#1e40af' : '#1b1f27')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#cfd5e1')};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+  padding: 10px 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.06s ease, background 0.12s ease, border-color 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: ${({ $active }) => ($active ? '#1d4ed8' : '#202633')};
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+  }
+
+  ${({ $disabled }) =>
+    $disabled &&
+    `
+    opacity: .5;
+    cursor: not-allowed;
+    background: #14171d;
+    transform: none;
+  `}
+`;
+
+
+===== C:\ed\templates\template-web\src\components\NumberSelector\NumberSelector.tsx =====
+"use client";
+import React from "react";
+import { Grid, Cell } from "./NumberSelector.styles";
+
+export interface NumberSelectorProps {
+  value?: number;
+  onChange: (n: number) => void;
+  max?: number;
+  pad?: number;
+  disabled?: boolean;
+  disabledNumbers?: Set<number> | number[];
+}
+
+export const NumberSelector: React.FC<NumberSelectorProps> = ({
+  value,
+  onChange,
+  max = 999,
+  pad = 3,
+  disabled = false,
+  disabledNumbers,
+}) => {
+  const disabledSet = React.useMemo<Set<number>>(() => {
+    if (!disabledNumbers) return new Set<number>();
+    return disabledNumbers instanceof Set
+      ? disabledNumbers
+      : new Set(disabledNumbers);
+  }, [disabledNumbers]);
+
+  const items = React.useMemo(
+    () => Array.from({ length: max + 1 }, (_, i) => i),
+    [max]
+  );
+  const isDisabled = (n: number) => disabled || disabledSet.has(n);
+
+  const refGrid = React.useRef<HTMLDivElement>(null);
+  const colGuess = 10;
+
+  const findNext = React.useCallback(
+    (from: number, delta: number) => {
+      if (from == null) return undefined;
+      let i = from;
+      for (let step = 0; step <= max; step++) {
+        i = i + delta;
+        if (i < 0 || i > max) break;
+        if (!isDisabled(i)) return i;
+      }
+      return undefined;
+    },
+    [max, isDisabled]
+  );
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    if (value == null) return;
+
+    let next: number | undefined;
+    switch (e.key) {
+      case "ArrowRight":
+        next = findNext(value, +1);
+        break;
+      case "ArrowLeft":
+        next = findNext(value, -1);
+        break;
+      case "ArrowDown":
+        next = findNext(value, +colGuess);
+        break;
+      case "ArrowUp":
+        next = findNext(value, -colGuess);
+        break;
+      case "Home":
+        next = items.find((n) => !isDisabled(n));
+        break;
+      case "End":
+        for (let i = max; i >= 0; i--) {
+          if (!isDisabled(i)) {
+            next = i;
+            break;
+          }
+        }
+        break;
+      case "Enter":
+      case " ":
+        break;
+      default:
+        return;
+    }
+    if (typeof next === "number") {
+      e.preventDefault();
+      onChange(next);
+    }
+  };
+
+  return (
+    <Grid
+      tabIndex={0}
+      aria-disabled={disabled}
+      role="grid"
+      onKeyDown={onKeyDown}
+      ref={refGrid}
+      aria-label="Selector de números"
+    >
+      {items.map((n) => {
+        const label = n.toString().padStart(pad, "0");
+        const active = value === n;
+        const blocked = isDisabled(n);
+
+        return (
+          <Cell
+            key={n}
+            type="button"
+            $active={active}
+            $disabled={blocked}
+            onClick={() => !blocked && onChange(n)}
+            aria-pressed={active}
+            aria-disabled={blocked}
+            disabled={blocked}
+            title={
+              blocked ? `Número ${label} no disponible` : `Elegir ${label}`
+            }
+          >
+            {label}
+          </Cell>
+        );
+      })}
+    </Grid>
+  );
+};
+
+
+===== C:\ed\templates\template-web\src\components\RefreshHeader\index.ts =====
+export { RefreshHeader, type RefreshHeaderProps } from "./RefreshHeader";
+
+
+===== C:\ed\templates\template-web\src\components\RefreshHeader\RefreshHeader.tsx =====
+'use client';
+
+import type { ReactNode } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { RefreshCw } from 'lucide-react';
+import { theme } from '@/styles/global';
+
+export type RefreshHeaderProps = {
+    title: string;
+    subtitle?: string;
+    icon?: ReactNode;
+    isFetching?: boolean;
+    onRefresh: () => void;
+    action?: ReactNode;
+};
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const Wrapper = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+`;
+
+const Left = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const TextBlock = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+`;
+
+const Title = styled.h1`
+    margin: 0;
+    font-size: 28px;
+    font-weight: 900;
+    color: ${theme.colors.text};
+`;
+
+const Subtitle = styled.p`
+    margin: 0;
+    font-size: 14px;
+    color: ${theme.colors.muted};
+`;
+
+const Right = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const RefreshButton = styled.button`
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid ${theme.colors.border};
+    background: ${theme.colors.panel};
+    color: ${theme.colors.text};
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        border-color: ${theme.colors.primary};
+        color: ${theme.colors.primary};
+        background: ${theme.colors.primary}12;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+`;
+
+const SpinnerIcon = styled(RefreshCw)<{ $spinning: boolean }>`
+    animation: ${(props) => (props.$spinning ? spin : 'none')} 0.8s linear infinite;
+`;
+
+export function RefreshHeader({
+    title,
+    subtitle,
+    icon,
+    isFetching = false,
+    onRefresh,
+    action,
+}: RefreshHeaderProps) {
+    return (
+        <Wrapper>
+            <Left>
+                {icon}
+                <TextBlock>
+                    <Title>{title}</Title>
+                    {subtitle ? <Subtitle>{subtitle}</Subtitle> : null}
+                </TextBlock>
+            </Left>
+
+            <Right>
+                {action}
+                <RefreshButton type="button" onClick={onRefresh} disabled={isFetching} aria-label="Refrescar datos" title="Refrescar datos">
+                    <SpinnerIcon size={18} $spinning={isFetching} />
+                </RefreshButton>
+            </Right>
+        </Wrapper>
+    );
+}
+
+
+===== C:\ed\templates\template-web\src\components\SideNav\index.ts =====
+export { default } from "./SideNav";
+export type { SideNavRoute, SideNavActiveContext } from "./SideNav";
+
+
+===== C:\ed\templates\template-web\src\components\SideNav\SideNav.tsx =====
+'use client';
+import Link from 'next/link';
+import styled from 'styled-components';
+import type { ComponentType, ReactNode } from 'react';
+import { ChevronRight, UserCircle2, X, Lock } from 'lucide-react';
+import { theme } from '@/styles/global';
+
+export type SideNavRoute = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ size?: number }>;
+  section?: 'account' | 'navigation';
+  highlight?: boolean;
+  locked?: boolean;
+  badge?: string;
+};
+
+export type SideNavActiveContext = {
+  href: string;
+  title: string;
+  name: string;
+  icon: ComponentType<{ size?: number }>;
+} | null;
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  pathname: string;
+  routes: SideNavRoute[];
+  user?: { name?: string | null; role?: string | null };
+  onSignOut: () => void;
+  /** Optional highlighted context card (e.g. active workspace). Injected by app shell — keep stores out of this component. */
+  activeContext?: SideNavActiveContext;
+  footerNote?: ReactNode;
+};
+
+const Aside = styled.aside<{ $open?: boolean }>`
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  background: ${theme.colors.bg};
+  border-right: 1px solid ${theme.colors.border};
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  width: var(--sidebar-w, 240px);
+
+  @media (max-width: 1023px) {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: min(80vw, 300px);
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    ${({ $open }) => $open && 'transform: translateX(0);'}
+  }
+`;
+
+const UserHeader = styled.div`
+  padding: 20px 16px;
+  border-bottom: 1px solid ${theme.colors.border};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const UserInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Title = styled.h3`
+  margin: 0;
+  font-weight: 800;
+  color: ${theme.colors.text};
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const Sub = styled.div`
+  font-size: 12px;
+  color: ${theme.colors.muted};
+  text-transform: uppercase;
+  font-weight: 700;
+`;
+
+const CloseButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid ${theme.colors.border};
+  background: transparent;
+  color: ${theme.colors.muted};
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 1023px) {
+    display: inline-flex;
+  }
+`;
+
+const ActiveContextCard = styled(Link)`
+  margin: 12px 12px 0 12px;
+  padding: 12px;
+  background: #1e293b;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ContextIcon = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.12);
+  color: ${theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ContextMeta = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ContextLabel = styled.div`
+  font-size: 10px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+`;
+
+const ContextName = styled.div`
+  font-size: 13px;
+  color: #fff;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const Scroll = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0px 12px;
+`;
+
+const SectionLabel = styled.div`
+  margin: 10px 8px 8px;
+  font-size: 11px;
+  color: ${theme.colors.muted};
+  text-transform: uppercase;
+  font-weight: 800;
+`;
+
+const Nav = styled.nav`
+  display: grid;
+  gap: 4px;
+`;
+
+const Item = styled.div<{ $locked?: boolean; $highlight?: boolean }>`
+  opacity: ${({ $locked }) => ($locked ? 0.55 : 1)};
+  border: ${({ $highlight }) => ($highlight ? `1px solid ${theme.colors.primary}` : '1px solid transparent')};
+  background: ${({ $highlight }) => ($highlight ? theme.colors.primary + '14' : 'transparent')};
+  border-radius: 10px;
+`;
+
+const ItemBase = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+`;
+
+const IconWrap = styled.div<{ $highlight?: boolean }>`
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: ${({ $highlight }) => ($highlight ? theme.colors.primary + '20' : theme.colors.panel)};
+  border: 1px solid ${theme.colors.border};
+  color: ${({ $highlight }) => ($highlight ? theme.colors.primary : theme.colors.text)};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Label = styled.span<{ $highlight?: boolean }>`
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: ${({ $highlight }) => ($highlight ? theme.colors.primary : theme.colors.text)};
+`;
+
+const ItemLink = styled(Link)`
+  display: block;
+  &:hover {
+    background: ${theme.colors.panel};
+    border-radius: 10px;
+  }
+`;
+
+const Badge = styled.span`
+  font-size: 10px;
+  color: ${theme.colors.primary};
+  border: 1px solid ${theme.colors.primary};
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-weight: 800;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  margin: 12px 8px;
+  background: ${theme.colors.border};
+`;
+
+const FooterArea = styled.div`
+  padding: 14px;
+  border-top: 1px solid ${theme.colors.border};
+  display: grid;
+  gap: 8px;
+`;
+
+const DangerBtn = styled.button`
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #e11d48;
+  color: #e11d48;
+  font-weight: 800;
+`;
+
+export default function SideNav({
+  open,
+  onClose,
+  pathname,
+  routes,
+  user,
+  onSignOut,
+  activeContext = null,
+  footerNote = 'Template starter',
+}: Props) {
+  const CtxIcon = activeContext?.icon;
+  const accountRoutes = routes.filter((r) => r.section === 'account');
+  const navRoutes = routes.filter((r) => r.section !== 'account');
+
+  function isActive(href: string) {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  return (
+    <Aside $open={open} aria-hidden={!open}>
+      <UserHeader>
+        <UserCircle2 size={38} color={theme.colors.primary} />
+        <UserInfo>
+          <Title>{user?.name ?? 'Usuario'}</Title>
+          <Sub>{(user?.role ?? 'usuario').toLowerCase()}</Sub>
+        </UserInfo>
+        <CloseButton onClick={onClose} type="button">
+          <X size={16} />
+        </CloseButton>
+      </UserHeader>
+
+      {activeContext && CtxIcon ? (
+        <ActiveContextCard href={activeContext.href} onClick={onClose}>
+          <ContextIcon>
+            <CtxIcon size={16} />
+          </ContextIcon>
+          <ContextMeta>
+            <ContextLabel>{activeContext.title}</ContextLabel>
+            <ContextName>{activeContext.name}</ContextName>
+          </ContextMeta>
+          <ChevronRight size={14} color={theme.colors.muted} />
+        </ActiveContextCard>
+      ) : null}
+
+      <Scroll>
+        {accountRoutes.length > 0 && <SectionLabel>Cuenta</SectionLabel>}
+        <Nav>
+          {accountRoutes.map((r) => {
+            const Icon = r.icon;
+            const active = isActive(r.href);
+            return (
+              <Item key={r.href} $locked={r.locked} $highlight={r.highlight}>
+                {r.locked ? (
+                  <ItemBase>
+                    <IconWrap $highlight={r.highlight}><Icon size={18} /></IconWrap>
+                    <Label $highlight={r.highlight}>{r.label}</Label>
+                    {r.badge ? <Badge>{r.badge}</Badge> : <Lock size={12} color={theme.colors.muted} />}
+                  </ItemBase>
+                ) : (
+                  <ItemLink href={r.href} onClick={onClose}>
+                    <ItemBase>
+                      <IconWrap $highlight={r.highlight}><Icon size={18} /></IconWrap>
+                      <Label $highlight={r.highlight}>{r.label}</Label>
+                      {r.locked && r.badge ? <Badge>{r.badge}</Badge> : null}
+                      <ChevronRight size={14} color={active ? theme.colors.primary : theme.colors.muted} />
+                    </ItemBase>
+                  </ItemLink>
+                )}
+              </Item>
+            );
+          })}
+        </Nav>
+
+        <Divider />
+        <SectionLabel>Navegacion</SectionLabel>
+        <Nav>
+          {navRoutes.map((r) => {
+            const Icon = r.icon;
+            const active = isActive(r.href);
+            return (
+              <Item key={r.href} $locked={r.locked}>
+                {r.locked ? (
+                  <ItemBase>
+                    <IconWrap><Icon size={18} /></IconWrap>
+                    <Label>{r.label}</Label>
+                    {r.badge ? <Badge>{r.badge}</Badge> : <Lock size={12} color={theme.colors.muted} />}
+                  </ItemBase>
+                ) : (
+                  <ItemLink href={r.href} onClick={onClose}>
+                    <ItemBase>
+                      <IconWrap><Icon size={18} /></IconWrap>
+                      <Label>{r.label}</Label>
+                      {r.locked && r.badge ? <Badge>{r.badge}</Badge> : null}
+                      <ChevronRight size={14} color={active ? theme.colors.primary : theme.colors.muted} />
+                    </ItemBase>
+                  </ItemLink>
+                )}
+              </Item>
+            );
+          })}
+        </Nav>
+      </Scroll>
+
+      <FooterArea>
+        <DangerBtn type="button" onClick={onSignOut}>Cerrar sesión</DangerBtn>
+        <div style={{ fontSize: 12, color: theme.colors.muted }}>{footerNote}</div>
+      </FooterArea>
+    </Aside>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\components\TimeRangeSelector\index.ts =====
+export {
+  TimeRangeSelector,
+  TIME_RANGE_OPTIONS,
+  DEFAULT_TIME_RANGES,
+  type TimeRange,
+  type TimeRangeOption,
+  type DefaultTimeRange,
+} from "./TimeRangeSelector";
+
+
+===== C:\ed\templates\template-web\src\components\TimeRangeSelector\TimeRangeSelector.tsx =====
+"use client";
+
+import React from "react";
+import styled from "styled-components";
+import { theme } from "@/styles/global";
+
+export type TimeRange =
+    | 'THIS_WEEK'
+    | 'LAST_WEEK'
+    | 'THIS_MONTH'
+    | 'LAST_MONTH'
+    | 'LAST_30';
+
+export const TIME_RANGE_OPTIONS: ReadonlyArray<{ label: string; value: TimeRange }> = [
+    { label: 'Esta semana', value: 'THIS_WEEK' },
+    { label: 'Semana pasada', value: 'LAST_WEEK' },
+    { label: 'Este mes', value: 'THIS_MONTH' },
+    { label: 'Mes anterior', value: 'LAST_MONTH' },
+    { label: 'Ultimos 30 dias', value: 'LAST_30' },
+] as const;
+
+export const DEFAULT_TIME_RANGES = TIME_RANGE_OPTIONS;
+export type DefaultTimeRange = TimeRange;
+
+export type TimeRangeOption<T extends string = string> = {
+    label: string;
+    value: T;
+};
+
+type Props<T extends string> = {
+    value: T;
+    onChange: (next: T) => void;
+    options?: ReadonlyArray<T | TimeRangeOption<T>>;
+    ariaLabel?: string;
+    disabled?: boolean;
+    size?: "sm" | "md";
+    className?: string;
+};
+
+const Tabs = styled.div<{ $disabled?: boolean; $size: "sm" | "md" }>`
+  display: flex;
+  background: ${theme.colors.panel};
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid ${theme.colors.border};
+  overflow-x: auto;
+  white-space: nowrap;
+  opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
+  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const TabBtn = styled.button<{ $active?: boolean; $size: "sm" | "md" }>`
+  padding: ${({ $size }) => ($size === "sm" ? "6px 12px" : "8px 16px")};
+  border-radius: 8px;
+  border: none;
+  font-size: ${({ $size }) => ($size === "sm" ? "12px" : "13px")};
+  cursor: pointer;
+  transition: all 0.2s;
+
+  background: ${({ $active }) => ($active ? theme.colors.bg : "transparent")};
+  color: ${({ $active }) => ($active ? theme.colors.primary : theme.colors.muted)};
+  font-weight: ${({ $active }) => ($active ? "700" : "500")};
+
+  &:hover {
+    color: ${theme.colors.primary};
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${theme.colors.primary}30;
+  }
+`;
+
+function normalizeOptions<T extends string>(
+    options: ReadonlyArray<T | TimeRangeOption<T>>,
+): ReadonlyArray<TimeRangeOption<T>> {
+    return options.map((opt) => (typeof opt === "string" ? { label: opt, value: opt } : opt));
+}
+
+export function TimeRangeSelector<T extends string>({
+    value,
+    onChange,
+    options = DEFAULT_TIME_RANGES as unknown as ReadonlyArray<T | TimeRangeOption<T>>,
+    ariaLabel = "Time range selector",
+    disabled,
+    size = "md",
+    className,
+}: Props<T>) {
+    const normalized = React.useMemo(() => normalizeOptions(options), [options]);
+
+    function move(step: number) {
+        const idx = normalized.findIndex((o) => o.value === value);
+        if (idx < 0) return;
+
+        const nextIdx = Math.min(Math.max(idx + step, 0), normalized.length - 1);
+        const next = normalized[nextIdx]?.value;
+        if (next && next !== value) onChange(next);
+    }
+
+    return (
+        <Tabs
+            className={className}
+            role="tablist"
+            aria-label={ariaLabel}
+            aria-disabled={disabled ? "true" : "false"}
+            $disabled={disabled}
+            $size={size}
+            onKeyDown={(e) => {
+                if (disabled) return;
+                if (e.key === "ArrowLeft") move(-1);
+                if (e.key === "ArrowRight") move(1);
+            }}
+        >
+            {normalized.map((opt) => {
+                const active = opt.value === value;
+                return (
+                    <TabBtn
+                        key={opt.value}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        $active={active}
+                        $size={size}
+                        onClick={() => !disabled && onChange(opt.value)}
+                    >
+                        {opt.label}
+                    </TabBtn>
+                );
+            })}
+        </Tabs>
+    );
+}
+
+
+===== C:\ed\templates\template-web\src\components\ui\Button\Button.styles.ts =====
+import styled from 'styled-components';
+
+export const StyledButton = styled.button<{ $variant?: 'primary' | 'ghost' | 'danger' }>`
+  --bg: ${({ theme, $variant }) =>
+    $variant === 'primary' ? theme.colors.primary :
+    $variant === 'danger' ? theme.colors.danger : 'transparent'};
+  --fg: ${({ $variant, theme }) => ($variant ? '#fff' : theme.colors.text)};
+  --bd: ${({ theme, $variant }) => ($variant ? 'transparent' : theme.colors.border)};
+
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--bd);
+  padding: 10px 14px;
+  border-radius: ${({ theme }) => theme.radius};
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .15s ease;
+
+  &:hover {
+    background: ${({ theme, $variant }) =>
+      $variant === 'primary' ? theme.colors.primaryHover :
+      $variant === 'danger' ? '#b91c1c' : '#181b22'};
+  }
+  &:disabled { opacity: .6; cursor: not-allowed; }
+`;
+
+
+===== C:\ed\templates\template-web\src\components\ui\Button\Button.tsx =====
+'use client';
+import React from 'react';
+import { StyledButton } from './Button.styles';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  $variant?: 'primary' | 'ghost' | 'danger';
+}
+
+export const Button: React.FC<ButtonProps> = ({ $variant = 'primary', children, ...rest }) => {
+  return (
+    <StyledButton $variant={$variant} {...rest}>
+      {children}
+    </StyledButton>
+  );
+};
+
+
+===== C:\ed\templates\template-web\src\components\ui\Button\index.ts =====
+export { Button } from './Button';
+
+
+===== C:\ed\templates\template-web\src\components\ui\Card\Card.styles.ts =====
+import styled from 'styled-components';
+
+export const StyledCard = styled.div`
+  background: ${({ theme }) => theme.colors.bg || '#1f2937'};
+  padding: clamp(0.75rem, 1.6vw, 1.25rem);
+  border-radius: ${({ theme }) => theme.radius};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+`;
+
+
+===== C:\ed\templates\template-web\src\components\ui\Card\Card.tsx =====
+'use client';
+import React from 'react';
+import { StyledCard } from './Card.styles';
+
+interface CardProps {
+  children: React.ReactNode;
+}
+
+export const Card: React.FC<CardProps> = ({ children }) => {
+  return <StyledCard>{children}</StyledCard>;
+};
+
+
+===== C:\ed\templates\template-web\src\components\ui\Card\index.ts =====
+export { Card } from './Card';
+
+
+===== C:\ed\templates\template-web\src\components\ui\Input\index.ts =====
+export { Input } from './Input';
+
+
+===== C:\ed\templates\template-web\src\components\ui\Input\Input.styles.ts =====
+import styled from 'styled-components';
+
+export const StyledInput = styled.input`
+  padding: 0.5rem 1rem;
+  border-radius: ${({ theme }) => theme.radius};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: transparent;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1rem;
+  outline: none;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+
+===== C:\ed\templates\template-web\src\components\ui\Input\Input.tsx =====
+'use client';
+import React from 'react';
+import { StyledInput } from './Input.styles';
+
+type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+
+export const Input: React.FC<InputProps> = (props) => {
+  return <StyledInput {...props} />;
+};
+
+
+===== C:\ed\templates\template-web\src\components\WorkspaceSwitcher\index.ts =====
+export { default } from './WorkspaceSwitcher';
+
+
+===== C:\ed\templates\template-web\src\components\WorkspaceSwitcher\WorkspaceSwitcher.tsx =====
+'use client';
+
+import { useEffect } from 'react';
+import styled from 'styled-components';
+import { ChevronDown } from 'lucide-react';
+import { theme } from '@/styles/global';
+import { useAuthStore } from '@/stores/auth.store';
+import { useWorkspaceStore } from '@/stores/workspace.store';
+
+const Wrap = styled.div`
+  position: relative;
+  min-width: 0;
+`;
+
+const Select = styled.select`
+  appearance: none;
+  max-width: 200px;
+  padding: 8px 32px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid ${theme.colors.border};
+  background: ${theme.colors.bg};
+  color: ${theme.colors.text};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
+const Icon = styled(ChevronDown)`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: ${theme.colors.muted};
+  width: 16px;
+  height: 16px;
+`;
+
+export default function WorkspaceSwitcher() {
+  const workspaces = useAuthStore((s) => s.workspaces);
+  const activeWorkspace = useWorkspaceStore((s) => s.activeWorkspace);
+  const setActiveWorkspace = useWorkspaceStore((s) => s.setActiveWorkspace);
+
+  useEffect(() => {
+    if (workspaces.length === 0) return;
+    if (activeWorkspace && workspaces.some((w) => w.id === activeWorkspace.id)) return;
+    const first = workspaces[0];
+    setActiveWorkspace({ id: first.id, name: first.name });
+  }, [workspaces, activeWorkspace, setActiveWorkspace]);
+
+  if (workspaces.length === 0) {
+    return (
+      <span style={{ fontSize: 12, color: theme.colors.muted, fontWeight: 600 }}>Sin workspaces</span>
+    );
+  }
+
+  return (
+    <Wrap>
+      <Select
+        aria-label="Workspace activo"
+        value={activeWorkspace?.id ?? workspaces[0].id}
+        onChange={(e) => {
+          const w = workspaces.find((x) => x.id === e.target.value);
+          if (w) setActiveWorkspace({ id: w.id, name: w.name });
+        }}
+      >
+        {workspaces.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
+          </option>
+        ))}
+      </Select>
+      <Icon aria-hidden />
+    </Wrap>
+  );
+}
+
+
+===== C:\ed\templates\template-web\src\lib\fetcher.ts =====
+// src/lib/fetcher.ts
+"use client";
+
+import { useAuthStore } from "@/modules/auth/store";
+
+export const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:7000/api";
+
+/**
+ * Hace un fetch puro pero con headers básicos.
+ */
+async function coreFetch<T>(
+    path: string,
+    init: RequestInit = {},
+    token?: string
+): Promise<T> {
+    const headers = new Headers(init.headers);
+    headers.set("Content-Type", "application/json");
+
+    // token explícito > token del store
+    const storeToken = useAuthStore.getState().accessToken;
+    const finalToken = token || storeToken;
+
+    if (finalToken) {
+        headers.set("Authorization", `Bearer ${finalToken}`);
+    }
+
+    const res = await fetch(`${API_BASE}${path}`, {
+        ...init,
+        headers,
+        cache: "no-store",
+    });
+
+    // respuesta OK
+    if (res.ok) {
+        try {
+            return (await res.json()) as T;
+        } catch {
+            return undefined as T;
+        }
+    }
+
+    // manejo 401 → limpiar sesión
+    if (res.status === 401) {
+        useAuthStore.getState().clear?.();
+        throw new Error("Sesión expirada. Inicia sesión nuevamente.");
+    }
+
+    // cualquier otro error → mensaje genérico
+    let message = `Error ${res.status}`;
+    try {
+        const json = await res.json();
+        if (json?.message) message = json.message;
+    } catch { }
+
+    throw new Error(message);
+}
+
+/**
+ * Wrapper principal que replica la idea del ZIP
+ */
+export async function http<T = unknown>(
+    path: string,
+    init: RequestInit = {},
+    token?: string
+): Promise<T> {
+    return coreFetch<T>(path, init, token);
+}
+
+
+===== C:\ed\templates\template-web\src\lib\queryClient.ts =====
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 20_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+
+===== C:\ed\templates\template-web\src\modules\auth\components\LoginForm\index.tsx =====
+"use client";
+
+import { useState } from "react";
+import styled from "styled-components";
+import { theme } from "@/styles/global";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+
+import { Smartphone, Hash, ArrowLeft } from "lucide-react";
+import { useRequestOtp } from "../../hooks/useRequestOtp";
+import { useVerifyOtp } from "../../hooks/useVerifyOtp";
+
+const FormCard = styled.div`
+  display: grid;
+  gap: 20px;
+`;
+
+const ErrorText = styled.div`
+  color: ${theme.colors.danger};
+  font-size: 13px;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+`;
+
+const BackButton = styled.button`
+  background: transparent;
+  border: 0;
+  color: ${theme.colors.muted};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  &:hover { color: ${theme.colors.primary}; }
+`;
+
+export default function LoginForm() {
+  const [step, setStep] = useState<"PHONE" | "CODE">("PHONE");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [otpToken, setOtpToken] = useState("");
+
+  const requestMutation = useRequestOtp();
+  const verifyMutation = useVerifyOtp();
+
+  // Paso 1: Solicitar OTP
+  const handleRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await requestMutation.mutateAsync(phone);
+      setOtpToken(res.otpToken);
+      setStep("CODE");
+    } catch (err) { }
+  };
+
+  // Paso 2: Verificar OTP
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await verifyMutation.mutateAsync({
+        phone,
+        otpToken,
+        code,
+      });
+      // El redirect ocurre automáticamente si el token cambia en RootClient, 
+      // o puedes forzarlo aquí:
+      window.location.href = "/dashboard";
+    } catch (err) { }
+  };
+
+  if (step === "CODE") {
+    return (
+      <FormCard as="form" onSubmit={handleVerify}>
+        <BackButton type="button" onClick={() => setStep("PHONE")}>
+          <ArrowLeft size={14} /> Volver a cambiar teléfono
+        </BackButton>
+
+        <div>
+          <label style={{ fontSize: '12px', color: theme.colors.muted, marginBottom: '8px', display: 'block' }}>
+            Código enviado a {phone}
+          </label>
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Introduce el código de 6 dígitos"
+            type="number"
+            autoFocus
+            required
+          />
+        </div>
+
+        {verifyMutation.error && <ErrorText>Código incorrecto o expirado</ErrorText>}
+
+        <Button disabled={verifyMutation.isPending} $variant="primary">
+          {verifyMutation.isPending ? "Verificando..." : "Confirmar Código"}
+        </Button>
+      </FormCard>
+    );
+  }
+
+  return (
+    <FormCard as="form" onSubmit={handleRequest}>
+      <div>
+        <label style={{ fontSize: '12px', color: theme.colors.muted, marginBottom: '8px', display: 'block' }}>
+          Tu número de teléfono
+        </label>
+        <Input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Ej: 3001234567"
+          type="tel"
+          required
+        />
+      </div>
+
+      {requestMutation.error && <ErrorText>No se pudo enviar el código. Revisa el número.</ErrorText>}
+
+      <Button disabled={requestMutation.isPending} $variant="primary">
+        {requestMutation.isPending ? "Enviando..." : "Siguiente"}
+      </Button>
+
+      <p style={{ fontSize: '12px', color: theme.colors.muted, textAlign: 'center' }}>
+        Te enviaremos un código de acceso por SMS o WhatsApp.
+      </p>
+    </FormCard>
+  );
+}
+
+===== C:\ed\templates\template-web\src\modules\auth\components\LoginForm\schema.ts =====
+// src/modules/auth/components/LoginForm/schema.ts
+import { z } from 'zod';
+
+const coPhoneRegex = /^[0-9+\-\s()]{7,20}$/;
+
+export const loginSchema = z.object({
+    phone: z.string().regex(coPhoneRegex, 'Teléfono inválido'),
+    password: z.string().min(6, 'Mínimo 6 caracteres'),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
+
+===== C:\ed\templates\template-web\src\modules\auth\hooks\useMe.ts =====
+// src/modules/auth/hooks/useMe.ts
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useAuthStore } from '@/stores/auth.store';
+import type { AccountCapabilities, AccountPermissionKey, StarterCapabilityReason } from '@/stores/auth.store';
+import { getMe } from '../services/auth.api';
+
+const REASON_MAP: Record<string, StarterCapabilityReason> = {
+  PREMIUM_REQUIRED: 'TIER_REQUIRED',
+  NOT_OWNER: 'NOT_OWNER',
+  ACCOUNT_INACTIVE: 'ACCOUNT_INACTIVE',
+  MAX_MINES_REACHED: 'LIMIT_WORKSPACES',
+  MAX_MEMBERS_REACHED: 'LIMIT_MEMBERS',
+  MAX_LAVADAS_REACHED: 'LIMIT_PRIMARY_RECORDS',
+  TIER_LIMIT_REACHED: 'TIER_LIMIT_REACHED',
+  FEATURE_DISABLED: 'FEATURE_DISABLED',
+};
+
+function mapReason(r?: string): StarterCapabilityReason | undefined {
+  if (!r) return undefined;
+  return REASON_MAP[r] ?? 'TIER_REQUIRED';
+}
+
+function mapCapabilities(raw: {
+  canInviteMembers: { enabled: boolean; reason?: string };
+  canCreateWorkspace: { enabled: boolean; reason?: string };
+  canUseApi: { enabled: boolean; reason?: string };
+  hasTierLimits: boolean;
+}): AccountCapabilities {
+  return {
+    canCreateMultipleWorkspaces: {
+      enabled: raw.canCreateWorkspace.enabled,
+      reason: mapReason(raw.canCreateWorkspace.reason),
+    },
+    canInviteMembers: {
+      enabled: raw.canInviteMembers.enabled,
+      reason: mapReason(raw.canInviteMembers.reason),
+    },
+    canUseApi: {
+      enabled: raw.canUseApi.enabled,
+      reason: mapReason(raw.canUseApi.reason),
+    },
+    hasTierLimits: raw.hasTierLimits,
+  };
+}
+
+export function useMe() {
+  const hydrateSession = useAuthStore((s) => s.hydrateSession);
+  const token = useAuthStore((s) => s.token);
+
+  const query = useQuery({
+    queryKey: ['me'],
+    queryFn: getMe,
+    enabled: !!token,
+  });
+
+  useEffect(() => {
+    if (!query.data) return;
+
+    const caps = query.data.accountCapabilities ?? query.data.capabilities;
+    if (!caps) return;
+
+    hydrateSession({
+      user: {
+        id: query.data.user.id,
+        phone: query.data.user.phone,
+        name: query.data.user.name ?? '',
+        role: query.data.user.role as any,
+        employeeRole: query.data.user.employeeRole as any,
+      },
+      workspaces: query.data.workspaces ?? [],
+      capabilities: mapCapabilities(caps),
+      accountPermissions: (query.data.account.permissions || []).filter(
+        Boolean,
+      ) as AccountPermissionKey[],
+      usage: {
+        workspaces: query.data.usage.workspaces,
+        members: query.data.usage.members,
+      },
+    });
+  }, [query.data, hydrateSession]);
+
+  return query;
+}
+
+
+===== C:\ed\templates\template-web\src\modules\auth\hooks\useRequestOtp.ts =====
+import { useMutation } from '@tanstack/react-query';
+import { requestOtp } from '../services/auth.api';
+
+export function useRequestOtp() {
+    return useMutation({
+        mutationFn: requestOtp,
+    });
+}
+
+
+===== C:\ed\templates\template-web\src\modules\auth\hooks\useVerifyOtp.ts =====
+import { useMutation } from '@tanstack/react-query';
+import { verifyOtp } from '../services/auth.api';
+import { useAuthStore } from '@/stores/auth.store';
+
+export function useVerifyOtp() {
+    const setSession = useAuthStore((s) => s.setSession);
+
+    return useMutation({
+        mutationFn: verifyOtp,
+        onSuccess: (res) => {
+            const id = res.user.id ?? res.user._id ?? '';
+            setSession({
+                token: res.accessToken,
+                user: {
+                    id,
+                    phone: res.user.phone,
+                    name: res.user.name ?? '',
+                    role: res.user.role as import('@/stores/auth.store').UserRole,
+                },
+            });
+        },
+    });
+}
+
+
+===== C:\ed\templates\template-web\src\modules\auth\services\auth.api.ts =====
+// src/modules/auth/services/auth.api.ts
+import { api } from '@/services/api';
+
+type ApiCapabilityBlock = {
+  enabled: boolean;
+  reason?: string;
+};
+
+export async function requestOtp(phone: string) {
+  const { data } = await api.post('/auth/request-otp', { phone });
+  return data as {
+    otpToken: string;
+    expiresAt: string;
+  };
+}
+
+export async function verifyOtp(params: {
+  phone: string;
+  otpToken: string;
+  code: string;
+}) {
+  const { data } = await api.post('/auth/verify-otp', params);
+  return data as {
+    accessToken: string;
+    user: {
+      _id?: string;
+      id?: string;
+      phone: string;
+      name: string;
+      role: string;
+    };
+  };
+}
+
+export async function registerOwner(params: {
+  phone: string;
+  name: string;
+}) {
+  const { data } = await api.post('/auth/register', params);
+  return data as {
+    accessToken: string;
+    user: {
+      _id?: string;
+      id?: string;
+      phone: string;
+      name: string;
+      role: string;
+    };
+  };
+}
+
+/** Shape returned by `template-backend` `AuthService.me`. */
+export async function getMe() {
+  const { data } = await api.get('/auth/me');
+  return data as {
+    user: {
+      id: string;
+      phone: string;
+      name?: string;
+      role: string;
+      accountTier?: string;
+      employeeRole?: string;
+    };
+    account: {
+      id: string;
+      tier: string;
+      billingPlan: string;
+      isActive: boolean;
+      setupComplete: boolean;
+      permissions: Array<
+        'PLATFORM_ADMIN' | 'BILLING_MANAGE' | 'MEMBER_INVITES' | 'DATA_EXPORT'
+      >;
+      subscriptionEndsAt?: string;
+      trialEndsAt?: string;
+    };
+    workspaces: Array<{ id: string; name: string }>;
+    usage: {
+      workspaces: { used: number; max: number };
+      members: { used: number; max: number };
+    };
+    accountCapabilities: {
+      canInviteMembers: ApiCapabilityBlock;
+      canCreateWorkspace: ApiCapabilityBlock;
+      canUseApi: ApiCapabilityBlock;
+      hasTierLimits: boolean;
+    };
+    capabilities?: {
+      canInviteMembers: ApiCapabilityBlock;
+      canCreateWorkspace: ApiCapabilityBlock;
+      canUseApi: ApiCapabilityBlock;
+      hasTierLimits: boolean;
+    };
+  };
+}
+
+
+===== C:\ed\templates\template-web\src\modules\auth\store.ts =====
+'use client';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+// User del backend: usualmente un líder
+export type User = {
+    _id: string;
+    name: string;
+    phone: string;
+    role?: string; // 'leader' | 'admin' | 'super_admin'
+} | null;
+
+interface AuthState {
+    accessToken: string | null;
+    refreshToken: string | null;
+    user: User;
+    setTokens: (a: string, r?: string) => void;
+    setUser: (u: User) => void;
+    clear: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+    persist(
+        (set) => ({
+            accessToken: null,
+            refreshToken: null,
+            user: null,
+            setTokens: (a, r) =>
+                set({
+                    accessToken: a,
+                    refreshToken: r ?? null,
+                }),
+            setUser: (u) => set({ user: u }),
+            clear: () => set({ accessToken: null, refreshToken: null, user: null }),
+        }),
+        {
+            name: 'credigas-auth', // clave en localStorage
+            storage: createJSONStorage(() => localStorage),
+        }
+    )
+);
+
+
+===== C:\ed\templates\template-web\src\services\api-base.ts =====
+/**
+ * Default targets `template-backend` (global prefix `/api`, default port 7000).
+ * Override with `NEXT_PUBLIC_API_BASE` (e.g. `http://localhost:7000/api`).
+ */
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ||
+  "http://localhost:7000/api";
+
+
+===== C:\ed\templates\template-web\src\services\api.ts =====
+import axios from 'axios';
+import { useAuthStore } from '@/stores/auth.store';
+import { API_BASE } from './api-base';
+
+export const api = axios.create({
+    baseURL: API_BASE,
+    timeout: 10000,
+});
+
+api.interceptors.request.use((config) => {
+    const token = useAuthStore.getState().token;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+
+===== C:\ed\templates\template-web\src\services\queryClient.ts =====
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: 1,
+            staleTime: 1000 * 10,
+            refetchOnReconnect: true,
+            refetchOnWindowFocus: false,
+        },
+        mutations: {
+            retry: false,
+        },
+    },
+});
+
+
+===== C:\ed\templates\template-web\src\stores\auth.store.ts =====
+// src/stores/auth.store.ts
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+export type UserRole =
+  | 'OWNER'
+  | 'OWNER_VIEWER'
+  | 'ADMIN'
+  | 'MEMBER'
+  | 'VIEWER';
+
+export type AuthUser = {
+  id: string;
+  phone: string;
+  name: string;
+  role: UserRole;
+  employeeRole?: 'BUSINESS_MANAGER' | 'SELLER' | 'MANUFACTURER' | 'TRANSPORTER' | 'GENERAL_SUPPORT';
+};
+
+export type WorkspaceSummary = {
+  id: string;
+  name: string;
+};
+
+export type StarterCapabilityReason =
+  | 'TIER_REQUIRED'
+  | 'NOT_OWNER'
+  | 'ACCOUNT_INACTIVE'
+  | 'LIMIT_WORKSPACES'
+  | 'LIMIT_MEMBERS'
+  | 'LIMIT_PRIMARY_RECORDS'
+  | 'TIER_LIMIT_REACHED'
+  | 'FEATURE_DISABLED';
+
+export type CapabilityFlag = {
+  enabled: boolean;
+  reason?: StarterCapabilityReason;
+};
+
+/** Mapped from `template-backend` `/auth/me` `accountCapabilities`. */
+export type AccountCapabilities = {
+  canCreateMultipleWorkspaces: CapabilityFlag;
+  canInviteMembers: CapabilityFlag;
+  canUseApi: CapabilityFlag;
+  hasTierLimits: boolean;
+};
+
+export type AccountPermissionKey =
+  | 'PLATFORM_ADMIN'
+  | 'BILLING_MANAGE'
+  | 'MEMBER_INVITES'
+  | 'DATA_EXPORT';
+
+export type AccountUsage = {
+  workspaces: { used: number; max: number };
+  members: { used: number; max: number };
+};
+
+type AuthState = {
+  token: string | null;
+  user: AuthUser | null;
+  workspaces: WorkspaceSummary[];
+  capabilities: AccountCapabilities | null;
+  accountPermissions: AccountPermissionKey[];
+  usage: AccountUsage | null;
+  isAuthenticated: boolean;
+  isHydrated: boolean;
+
+  setSession: (data: {
+    token: string;
+    user: AuthUser;
+    workspaces?: WorkspaceSummary[];
+    capabilities?: AccountCapabilities | null;
+    accountPermissions?: AccountPermissionKey[];
+    usage?: AccountUsage | null;
+  }) => void;
+
+  hydrateSession: (data: {
+    user: AuthUser;
+    workspaces?: WorkspaceSummary[];
+    capabilities?: AccountCapabilities | null;
+    accountPermissions?: AccountPermissionKey[];
+    usage?: AccountUsage | null;
+  }) => void;
+
+  logout: () => void;
+};
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      token: null,
+      user: null,
+      workspaces: [],
+      capabilities: null,
+      accountPermissions: [],
+      usage: null,
+      isAuthenticated: false,
+      isHydrated: false,
+
+      setSession: ({
+        token,
+        user,
+        workspaces = [],
+        capabilities = null,
+        accountPermissions,
+        usage = null,
+      }) =>
+        set((state) => ({
+          token,
+          user,
+          workspaces,
+          capabilities: capabilities ?? state.capabilities,
+          accountPermissions: accountPermissions ?? state.accountPermissions,
+          usage: usage ?? state.usage,
+          isAuthenticated: true,
+          isHydrated: true,
+        })),
+
+      hydrateSession: ({
+        user,
+        workspaces = [],
+        capabilities = null,
+        accountPermissions,
+        usage = null,
+      }) =>
+        set((state) => ({
+          user,
+          workspaces: workspaces.length > 0 ? workspaces : state.workspaces,
+          capabilities: capabilities ?? state.capabilities,
+          accountPermissions: accountPermissions ?? state.accountPermissions,
+          usage: usage ?? state.usage,
+          isAuthenticated: true,
+          isHydrated: true,
+        })),
+
+      logout: () =>
+        set({
+          token: null,
+          user: null,
+          workspaces: [],
+          capabilities: null,
+          accountPermissions: [],
+          usage: null,
+          isAuthenticated: false,
+          isHydrated: true,
+        }),
+    }),
+    {
+      name: 'auth-storage',
+      version: 2,
+      storage: createJSONStorage(() => localStorage),
+      migrate: (persisted: unknown) => {
+        const root = persisted as {
+          state?: Record<string, unknown> & {
+            mines?: { id: string; name: string }[];
+            businesses?: { id: string; name: string }[];
+            workspaces?: { id: string; name: string }[];
+            usage?: Record<string, unknown>;
+          };
+        };
+        if (!root?.state) return persisted;
+        const s = root.state;
+        const mines = s.mines as { id: string; name: string }[] | undefined;
+        const businesses = s.businesses as { id: string; name: string }[] | undefined;
+        const hasOldLists =
+          (mines?.length || businesses?.length) && !(s.workspaces as unknown[])?.length;
+        if (hasOldLists) {
+          const map = new Map<string, { id: string; name: string }>();
+          for (const m of mines || []) map.set(m.id, m);
+          for (const b of businesses || []) map.set(b.id, b);
+          s.workspaces = [...map.values()];
+        }
+        delete s.mines;
+        delete s.businesses;
+
+        const u = s.usage as Record<string, unknown> | undefined;
+        if (u && !u.members) {
+          const legacyMembers = (u.membersPerMine ?? u.lavadas) as
+            | { used?: number; max?: number }
+            | undefined;
+          s.usage = {
+            workspaces: (u.mines ?? u.workspaces ?? { used: 0, max: 0 }) as {
+              used: number;
+              max: number;
+            },
+            members: {
+              used: legacyMembers?.used ?? 0,
+              max: legacyMembers?.max ?? 0,
+            },
+          };
+        }
+
+        return root;
+      },
+      partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+        workspaces: state.workspaces,
+        capabilities: state.capabilities,
+        accountPermissions: state.accountPermissions,
+        usage: state.usage,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token && state?.user) {
+          state.isAuthenticated = true;
+        }
+        if (state) state.isHydrated = true;
+      },
+    },
+  ),
+);
+
+
+===== C:\ed\templates\template-web\src\stores\downtime.store.ts =====
+import { create } from 'zustand';
+
+type Downtime = {
+    id: string;
+    type: string;
+    openedAt: string;
+    closedAt?: string;
+};
+
+type DowntimeState = {
+    active: Downtime[];
+    history: Downtime[];
+
+    setActive: (d: Downtime[]) => void;
+    setHistory: (d: Downtime[]) => void;
+};
+
+export const useDowntimeStore = create<DowntimeState>((set) => ({
+    active: [],
+    history: [],
+
+    setActive: (active) => set({ active }),
+    setHistory: (history) => set({ history }),
+}));
+
+
+===== C:\ed\templates\template-web\src\stores\ui.store.ts =====
+import { create } from 'zustand';
+
+type UiState = {
+    isMenuOpen: boolean;
+    openMenu: () => void;
+    closeMenu: () => void;
+    toggleMenu: () => void;
+};
+
+export const useUiStore = create<UiState>((set) => ({
+    isMenuOpen: false,
+
+    openMenu: () => set({ isMenuOpen: true }),
+    closeMenu: () => set({ isMenuOpen: false }),
+    toggleMenu: () =>
+        set((s) => ({ isMenuOpen: !s.isMenuOpen })),
+}));
+
+
+===== C:\ed\templates\template-web\src\stores\workspace.store.ts =====
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+/** Active workspace slice persisted client-side for shell demos (maps to API “mine/business” ids). */
+export type ActiveWorkspaceRef = {
+  id: string;
+  name: string;
+};
+
+type WorkspaceState = {
+  activeWorkspace: ActiveWorkspaceRef | null;
+  setActiveWorkspace: (w: ActiveWorkspaceRef | null) => void;
+};
+
+export const useWorkspaceStore = create<WorkspaceState>()(
+  persist(
+    (set) => ({
+      activeWorkspace: null,
+      setActiveWorkspace: (w) => set({ activeWorkspace: w }),
+    }),
+    {
+      name: 'workspace-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({ activeWorkspace: s.activeWorkspace }),
+    },
+  ),
+);
+
+
+===== C:\ed\templates\template-web\src\styles\chatTheme.ts =====
+// chatTheme.ts
+import { theme } from "@/styles/global";
+
+export const chatTheme = {
+  // ===== Sidebar (lista de chats) =====
+  // Panel izquierdo tipo WhatsApp, pero usando tus colores
+  sidebarBg: theme.colors.panel,          // #1e293b
+  sidebarBorder: theme.colors.border,     // #334155
+  sidebarHover: "rgba(148,163,184,0.07)", // hover sutil gris-azulado
+  sidebarActiveBg: "rgba(79,70,229,0.15)",// highlight activo estilo 'seleccionado'
+  sidebarTextMain: theme.colors.text,     // #e2e8f0
+  sidebarTextSub: theme.colors.muted,     // #94a3b8
+
+  // badge de unread tipo WhatsApp (verde) pero adaptado a tu verde oscuro waOutgoingBg
+  sidebarUnreadBg: theme.colors.waOutgoingBg,       // #075e54
+  sidebarUnreadText: theme.colors.waText,
+  sidebarUnreadBorder: theme.colors.waOutgoingBorder,
+  
+
+  // ===== Chat header (barra arriba del chat seleccionado) =====
+  chatHeaderBg: theme.colors.panel,       // #1e293b
+  chatHeaderBorder: theme.colors.border,  // #334155
+  chatHeaderTextMain: theme.colors.text,  // #e2e8f0
+  chatHeaderTextSub: theme.colors.muted,  // #94a3b8
+
+  // ===== Chat body (fondo y burbujas) =====
+  chatBg: theme.colors.bg,                // #0f172a  (fondo del área de mensajes)
+  chatIncomingBg: theme.colors.waIncomingBg,        // #202c33  (burbuja cliente)
+  chatIncomingBorder: theme.colors.waIncomingBorder,// #2f3b42
+  chatOutgoingBg: theme.colors.waOutgoingBg,        // #075e54  (burbuja mía)
+  chatOutgoingBorder: theme.colors.waOutgoingBorder,// #0b6f61
+  chatText: theme.colors.text,            // #e2e8f0
+  chatTimestamp: theme.colors.muted,      // #94a3b8
+  chatBubbleRadius: "8px",
+
+  // ===== Composer (input para escribir) =====
+  composerBg: theme.colors.panel,         // #1e293b
+  composerBorder: theme.colors.border,    // #334155
+  composerInputBg: theme.colors.inputBg,  // #0f172a
+  composerInputBorder: theme.colors.inputBorder, // #475569
+  composerInputText: theme.colors.inputText,     // #e2e8f0
+  composerSendBg: theme.colors.primary,          // #4f46e5
+  composerSendText: "#fff",
+
+  // ===== Right column (LeadCard, IA Panel, etc.) =====
+  rightPanelBg: theme.colors.panel,         // #1e293b
+  rightPanelBorder: theme.colors.border,    // #334155
+  rightPanelTextMain: theme.colors.text,    // #e2e8f0
+  rightPanelTextSub: theme.colors.muted,    // #94a3b8
+  rightPanelBtnBg: theme.colors.primary,    // #4f46e5
+  rightPanelBtnText: "#fff",
+  rightPanelBadgeBg: "rgba(148,163,184,0.12)", // chip suave gris
+  rightPanelBadgeText: theme.colors.text,
+
+  // ===== Scrollbars =====
+  scrollTrack: theme.colors.waScrollTrack,             // rgba(148,163,184,0.15)
+  scrollThumb: theme.colors.waScrollThumb,             // rgba(148,163,184,0.4)
+  scrollThumbHover: theme.colors.waScrollThumbHover,   // rgba(148,163,184,0.6)
+};
+
+
+===== C:\ed\templates\template-web\src\styles\global.ts =====
+// src/styles/theme.ts
+import { createGlobalStyle } from "styled-components";
+
+// Colores base de mineCop (Extraídos de tus tokens)
+const mineBackground = "#0B0F14";
+const mineSurface = "#121821";
+const mineAccent = "#FACC15"; // Oro Minero
+const mineAccentDark = "#CA8A04";
+
+export const theme = {
+  colors: {
+    // Fondo general dark
+    bg: mineBackground,
+    panel: mineSurface,
+    border: "#1F2937",
+    inputBg: "#1A2230",
+    inputBorder: "#374151",
+    inputText: "#E6EDF3",
+    text: "#E6EDF3",
+    muted: "#9BA4B5",
+
+    // 🎯 Oro mineCop como color de marca (Sustituye al verde)
+    primary: mineAccent,
+    primaryHover: mineAccentDark,
+
+    danger: "#EF4444",
+
+    tableHeader: mineSurface,
+    tableRow: mineSurface,
+    tableRowHover: "#1A2230",
+
+    // Stats con un toque dorado/oscuro
+    statBg: "rgba(250, 204, 21, 0.05)",
+
+    // Tonos estilo Chat/Logs adaptados al Oro
+    waIncomingBg: "#1A2230",
+    waIncomingBorder: "#1F2937",
+    waOutgoingBg: "rgba(250, 204, 21, 0.10)",     // mineAccent con alpha
+    waOutgoingBorder: "rgba(250, 204, 21, 0.45)", // oro más intenso
+    waText: "#FEF9C3",                            // Amarillo muy claro para texto
+
+    waScrollTrack: "rgba(31, 41, 55, 0.5)",
+    waScrollThumb: "#374151",
+    waScrollThumbHover: mineAccent,
+
+    // Aliases for new modules
+    surface: mineSurface,
+    surfaceSoft: "#1A2230",
+    textPrimary: "#E6EDF3",
+    textSecondary: "#9BA4B5",
+    accent: mineAccent,
+  },
+  radius: "12px",
+};
+
+export const GlobalStyle = createGlobalStyle`
+  :root { 
+    color-scheme: dark; 
+  }
+
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: ${theme.colors.bg};
+    color: ${theme.colors.text};
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Personalización de selección para que combine con el Oro */
+  ::selection {
+    background-color: ${theme.colors.primary};
+    color: #000;
+  }
+
+  a { 
+    color: inherit; 
+    text-decoration: none; 
+    transition: all 0.2s ease;
+  }
+
+  ul { list-style: none; }
+
+  /* Scrollbar temático minero */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: ${theme.colors.waScrollTrack};
+  }
+  ::-webkit-scrollbar-thumb {
+    background: ${theme.colors.waScrollThumb};
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: ${theme.colors.waScrollThumbHover};
+  }
+`;
+
+===== C:\ed\templates\template-web\src\styles\styled.d.ts =====
+import 'styled-components';
+
+declare module 'styled-components' {
+  export interface DefaultTheme {
+    colors: {
+      bg: string;
+      primary: string;
+      primaryHover: string;
+      danger: string;
+      text: string;
+      border: string;
+      panel: string;
+
+      // Aliases
+      surface: string;
+      surfaceSoft: string;
+      textPrimary: string;
+      textSecondary: string;
+      accent: string;
+    };
+    radius: string;
+  }
+}
+
+
+===== C:\ed\templates\template-web\src\utils\constants.ts =====
+/** Optional marketing nav entries for demos — not wired by default. */
+export const DEMO_MARKETING_ROUTES: { href: string; label: string }[] = [];
+
+

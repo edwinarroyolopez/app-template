@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692787401426",
+    "project_id": "pulsocopnotifications",
+    "storage_bucket": "pulsocopnotifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692787401426:android:a0a8c26d88c6be0a00930b",
+        "android_client_info": {
+          "package_name": "com.pulsocop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAaZCYqrwpMP6AE8GnqBk2gnlQW1zvAPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
